@@ -1,6 +1,5 @@
-// Go implementation of http://www.hashids.org
-// go install 
-// under MIT license
+// Go implementation of http://www.hashids.org under MIT license
+// Setup: go get github.com/speps/go-hashids
 // original implementations by Ivan Akimov at https://github.com/ivanakimov
 
 package hashids
