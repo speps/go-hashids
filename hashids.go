@@ -1,6 +1,8 @@
 // Go implementation of http://www.hashids.org under MIT license
+// Generates hashes from an array of integers, eg. for YouTube like hashes
 // Setup: go get github.com/speps/go-hashids
-// original implementations by Ivan Akimov at https://github.com/ivanakimov
+// Original implementations by Ivan Akimov at https://github.com/ivanakimov
+// Thanks to Rémy Oudompheng for some code review
 
 package hashids
 
@@ -21,10 +23,13 @@ type HashID struct {
 	Salt      string
 }
 
+// New creates a new HashID with the DefaultAlphabet already set.
 func New() *HashID {
 	return &HashID{Alphabet: DefaultAlphabet}
 }
 
+// Encrypt hashes an array of int to a string containing at least MinLength characters taken from the Alphabet.
+// Use Decrypt using the same Alphabet and Salt to get back the array of int.
 func (h *HashID) Encrypt(numbers []int) string {
 	if len(numbers) == 0 {
 		panic("encrypting empty array of numbers makes no sense")
@@ -38,8 +43,8 @@ func (h *HashID) Encrypt(numbers []int) string {
 		panic("alphabet must contain at least 4 characters")
 	}
 
-	alphabetRunes := bytes.Runes([]byte(h.Alphabet))
-	saltRunes := bytes.Runes([]byte(h.Salt))
+	alphabetRunes := []rune(h.Alphabet)
+	saltRunes := []rune(h.Salt)
 
 	alphabetRunes, seps, guards := getSepsAndGuards(alphabetRunes)
 
@@ -49,29 +54,27 @@ func (h *HashID) Encrypt(numbers []int) string {
 }
 
 func encode(numbers []int, alphabetOriginal, salt, sepsOriginal, guards []rune, minLength int) []rune {
-	numbersRunes := make([]rune, 0)
+	numbersBytes := make([]byte, 0)
 	for _, n := range numbers {
-		numbersRunes = append(numbersRunes, bytes.Runes([]byte(strconv.FormatInt(int64(n), 10)))...)
+		numbersBytes = strconv.AppendInt(numbersBytes, int64(n), 10)
 	}
-	seps := consistentShuffle(sepsOriginal, numbersRunes)
+	seps := consistentShuffle(sepsOriginal, bytes.Runes(numbersBytes))
 
 	alphabet := make([]rune, len(alphabetOriginal))
 	copy(alphabet, alphabetOriginal)
 
-	lotterySalt := new(bytes.Buffer)
+	lotterySalt := make([]byte, 0, 2*len(numbers))
 	for i, n := range numbers {
 		if i > 0 {
-			lotterySalt.WriteString("-")
+			lotterySalt = append(lotterySalt, '-')
 		}
-		s := strconv.FormatInt(int64(n), 10)
-		lotterySalt.WriteString(s)
+		lotterySalt = strconv.AppendInt(lotterySalt, int64(n), 10)
 	}
 	for _, n := range numbers {
-		s := strconv.FormatInt(int64((n+1)*2), 10)
-		lotterySalt.WriteString("-")
-		lotterySalt.WriteString(s)
+		lotterySalt = append(lotterySalt, '-')
+		lotterySalt = strconv.AppendInt(lotterySalt, int64((n+1)*2), 10)
 	}
-	lottery := consistentShuffle(alphabet, bytes.Runes([]byte(lotterySalt.String())))
+	lottery := consistentShuffle(alphabet, bytes.Runes(lotterySalt))
 	lotteryRune := lottery[0]
 
 	for i, r := range alphabet {
@@ -80,7 +83,7 @@ func encode(numbers []int, alphabetOriginal, salt, sepsOriginal, guards []rune, 
 			break
 		}
 	}
-	saltL := append(bytes.Runes([]byte(strconv.FormatInt(int64(lotteryRune&12345), 10))), salt...)
+	saltL := append([]rune(strconv.FormatInt(int64(lotteryRune&12345), 10)), salt...)
 
 	result := make([]rune, 0, minLength)
 	result = append(result, lotteryRune)
@@ -114,7 +117,7 @@ func encode(numbers []int, alphabetOriginal, salt, sepsOriginal, guards []rune, 
 	for len(result) < minLength {
 		padArray := []int{int(alphabet[1]), int(alphabet[0])}
 		padLeft := encode(padArray, alphabet, salt, sepsOriginal, guards, 0)
-		padArrayRunes := append(bytes.Runes([]byte(strconv.FormatInt(int64(padArray[0]), 10))), bytes.Runes([]byte(strconv.FormatInt(int64(padArray[1]), 10)))...)
+		padArrayRunes := append([]rune(strconv.FormatInt(int64(padArray[0]), 10)), []rune(strconv.FormatInt(int64(padArray[1]), 10))...)
 		padRight := encode(padArray, alphabet, padArrayRunes, sepsOriginal, guards, 0)
 
 		result = append(padLeft, append(result, padRight...)...)
@@ -129,10 +132,13 @@ func encode(numbers []int, alphabetOriginal, salt, sepsOriginal, guards []rune, 
 	return result
 }
 
+// Decrypt unhashes the string passed to an array of int.
+// It is symmetric with Encrypt if the Alphabet and Salt are the same ones which were used to hash.
+// MinLength has no effect on Decrypt.
 func (h *HashID) Decrypt(hash string) []int {
-	alphabetRunes := bytes.Runes([]byte(h.Alphabet))
-	saltRunes := bytes.Runes([]byte(h.Salt))
-	hashRunes := bytes.Runes([]byte(hash))
+	alphabetRunes := []rune(h.Alphabet)
+	saltRunes := []rune(h.Salt)
+	hashRunes := []rune(hash)
 
 	alphabetRunes, seps, guards := getSepsAndGuards(alphabetRunes)
 
@@ -163,7 +169,7 @@ func decode(hash, alphabetOriginal, salt, seps, guards []rune) []int {
 		}
 	}
 
-	saltL := append(bytes.Runes([]byte(strconv.FormatInt(int64(lotteryRune&12345), 10))), salt...)
+	saltL := append([]rune(strconv.FormatInt(int64(lotteryRune&12345), 10)), salt...)
 
 	result := make([]int, len(hashes))
 	for i, subHash := range hashes {
@@ -221,13 +227,9 @@ func splitRunes(input, seps []rune) [][]rune {
 
 func hash(input int, alphabet []rune) []rune {
 	result := make([]rune, 0)
-	for {
+	for ; input > 0; input /= len(alphabet) {
 		r := alphabet[input%len(alphabet)]
 		result = append([]rune{r}, result...)
-		input = input / len(alphabet)
-		if input == 0 {
-			break
-		}
 	}
 	return result
 }
