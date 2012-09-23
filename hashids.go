@@ -229,9 +229,13 @@ func hash(input int, alphabet []rune) []rune {
 	result := make([]rune, 0)
 	for ; input > 0; input /= len(alphabet) {
 		r := alphabet[input%len(alphabet)]
-		result = append([]rune{r}, result...)
+		result = append(result, r)
 	}
-	return result
+	reversed := make([]rune, len(result))
+	for i, r := range result {
+		reversed[len(result)-i-1] = r
+	}
+	return reversed
 }
 
 func unhash(input, alphabet []rune) int {
