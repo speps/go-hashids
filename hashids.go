@@ -153,7 +153,7 @@ func decode(hash, alphabetOriginal, salt, seps, guards []rune) []int {
 	if len(hashes) == 2 || len(hashes) == 3 {
 		hashIndex = 1
 	} else {
-		panic("malformed hash input")
+		hashIndex = 0
 	}
 
 	hashes = splitRunes(hashes[hashIndex], seps)
@@ -200,6 +200,7 @@ func getSepsAndGuards(alphabet []rune) ([]rune, []rune, []rune) {
 	}
 	return alphabet, seps, guards
 }
+
 
 func splitRunes(input, seps []rune) [][]rune {
 	splitIndices := make([]int, 0)
