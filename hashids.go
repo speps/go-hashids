@@ -8,6 +8,7 @@ package hashids
 
 import (
 	"bytes"
+	"errors"
 	"math"
 	"strconv"
 )
@@ -30,17 +31,17 @@ func New() *HashID {
 
 // Encrypt hashes an array of int to a string containing at least MinLength characters taken from the Alphabet.
 // Use Decrypt using the same Alphabet and Salt to get back the array of int.
-func (h *HashID) Encrypt(numbers []int) string {
+func (h *HashID) Encrypt(numbers []int) (string, error) {
 	if len(numbers) == 0 {
-		panic("encrypting empty array of numbers makes no sense")
+		return "", errors.New("encrypting empty array of numbers makes no sense")
 	}
 	for _, n := range numbers {
 		if n < 0 {
-			panic("negative number not supported")
+			return "", errors.New("negative number not supported")
 		}
 	}
 	if len(h.Alphabet) < 4 {
-		panic("alphabet must contain at least 4 characters")
+		return "", errors.New("alphabet must contain at least 4 characters")
 	}
 
 	alphabetRunes := []rune(h.Alphabet)
@@ -50,7 +51,7 @@ func (h *HashID) Encrypt(numbers []int) string {
 
 	alphabetRunes = consistentShuffle(alphabetRunes, saltRunes)
 
-	return string(encode(numbers, alphabetRunes, saltRunes, seps, guards, h.MinLength))
+	return string(encode(numbers, alphabetRunes, saltRunes, seps, guards, h.MinLength)), nil
 }
 
 func encode(numbers []int, alphabetOriginal, salt, sepsOriginal, guards []rune, minLength int) []rune {
@@ -200,7 +201,6 @@ func getSepsAndGuards(alphabet []rune) ([]rune, []rune, []rune) {
 	}
 	return alphabet, seps, guards
 }
-
 
 func splitRunes(input, seps []rune) [][]rune {
 	splitIndices := make([]int, 0)

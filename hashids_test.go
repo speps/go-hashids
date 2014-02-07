@@ -10,7 +10,10 @@ func TestEncryptDecrypt(t *testing.T) {
 	hid.Salt = "this is my salt"
 
 	numbers := []int{45, 434, 1313, 99}
-	hash := hid.Encrypt(numbers)
+	hash, err := hid.Encrypt(numbers)
+	if err != nil {
+		t.Fatal(err)
+	}
 	dec := hid.Decrypt(hash)
 
 	t.Logf("%v -> %v -> %v", numbers, hash, dec)
@@ -31,7 +34,10 @@ func TestZeroMinimumLength(t *testing.T) {
 	hid.Salt = "this is my salt"
 
 	numbers := []int{45, 434, 1313, 99}
-	hash := hid.Encrypt(numbers)
+	hash, err := hid.Encrypt(numbers)
+	if err != nil {
+		t.Fatal(err)
+	}
 	dec := hid.Decrypt(hash)
 
 	t.Logf("%v -> %v -> %v", numbers, hash, dec)
