@@ -7,199 +7,198 @@
 package hashids
 
 import (
-	"bytes"
 	"errors"
 	"math"
-	"strconv"
 )
 
-const DefaultAlphabet string = "xcS4F6h89aUbidefI7jkyunopqrsgCYE5GHTKLMtARXz"
+const Version string = "1.0.0"
+const DefaultAlphabet string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
-var primes []int = []int{2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43}
-var sepsIndices []int = []int{0, 4, 8, 12}
+const minAlphabetLength int = 16
+const sepDiv float64 = 3.5
+const guardDiv float64 = 12.0
+
+var sepsOriginal []rune = []rune("cfhistuCFHISTU")
 
 type HashID struct {
+	alphabet  []rune
+	minLength int
+	salt      []rune
+	seps      []rune
+	guards    []rune
+}
+
+type HashIDData struct {
 	Alphabet  string
 	MinLength int
 	Salt      string
 }
 
 // New creates a new HashID with the DefaultAlphabet already set.
-func New() *HashID {
-	return &HashID{Alphabet: DefaultAlphabet}
+func NewData() *HashIDData {
+	return &HashIDData{Alphabet: DefaultAlphabet}
 }
 
-// Encrypt hashes an array of int to a string containing at least MinLength characters taken from the Alphabet.
-// Use Decrypt using the same Alphabet and Salt to get back the array of int.
-func (h *HashID) Encrypt(numbers []int) (string, error) {
+func New() *HashID {
+	return NewWithData(NewData())
+}
+
+func NewWithData(data *HashIDData) *HashID {
+	if len(data.Alphabet) < minAlphabetLength {
+		panic(errors.New("alphabet must contain at least 16 characters"))
+	}
+	// Check if all characters are unique in Alphabet
+	uniqueCheck := make(map[rune]bool, len(data.Alphabet))
+	for _, a := range data.Alphabet {
+		if _, found := uniqueCheck[a]; found {
+			panic(errors.New("duplicate character in alphabet"))
+		}
+		uniqueCheck[a] = true
+	}
+
+	alphabet := []rune(data.Alphabet)
+	salt := []rune(data.Salt)
+
+	seps := make([]rune, len(sepsOriginal))
+	copy(seps, sepsOriginal)
+
+	// seps should contain only characters present in alphabet; alphabet should not contains seps
+	for i := 0; i < len(seps); i++ {
+		foundIndex := -1
+		for j, a := range alphabet {
+			if a == seps[i] {
+				foundIndex = j
+				break
+			}
+		}
+		if foundIndex == -1 {
+			seps = append(seps[:i], seps[i+1:]...)
+			i--
+		} else {
+			alphabet = append(alphabet[:foundIndex], alphabet[foundIndex+1:]...)
+		}
+	}
+	seps = consistentShuffle(seps, salt)
+
+	if len(seps) == 0 || float64(len(alphabet))/float64(len(seps)) > sepDiv {
+		sepsLength := int(math.Ceil(float64(len(alphabet)) / sepDiv))
+		if sepsLength == 1 {
+			sepsLength++
+		}
+		if sepsLength > len(seps) {
+			diff := sepsLength - len(seps)
+			seps = append(seps, alphabet[:diff]...)
+			alphabet = alphabet[diff:]
+		} else {
+			seps = seps[:sepsLength]
+		}
+	}
+	alphabet = consistentShuffle(alphabet, salt)
+
+	guardCount := int(math.Ceil(float64(len(alphabet)) / guardDiv))
+	var guards []rune
+	if len(alphabet) < 3 {
+		guards = seps[:guardCount]
+		seps = seps[guardCount:]
+	} else {
+		guards = alphabet[:guardCount]
+		alphabet = alphabet[guardCount:]
+	}
+
+	return &HashID{
+		alphabet:  alphabet,
+		minLength: data.MinLength,
+		salt:      salt,
+		seps:      seps,
+		guards:    guards,
+	}
+}
+
+// Encode hashes an array of int to a string containing at least MinLength characters taken from the Alphabet.
+// Use Decode using the same Alphabet and Salt to get back the array of int.
+func (h *HashID) Encode(numbers []int) (string, error) {
 	if len(numbers) == 0 {
-		return "", errors.New("encrypting empty array of numbers makes no sense")
+		return "", errors.New("encoding empty array of numbers makes no sense")
 	}
 	for _, n := range numbers {
 		if n < 0 {
 			return "", errors.New("negative number not supported")
 		}
 	}
-	if len(h.Alphabet) < 4 {
-		return "", errors.New("alphabet must contain at least 4 characters")
-	}
 
-	alphabetRunes := []rune(h.Alphabet)
-	saltRunes := []rune(h.Salt)
+	alphabet := make([]rune, len(h.alphabet))
+	copy(alphabet, h.alphabet)
 
-	alphabetRunes, seps, guards := getSepsAndGuards(alphabetRunes)
-
-	alphabetRunes = consistentShuffle(alphabetRunes, saltRunes)
-
-	return string(encode(numbers, alphabetRunes, saltRunes, seps, guards, h.MinLength)), nil
-}
-
-func encode(numbers []int, alphabetOriginal, salt, sepsOriginal, guards []rune, minLength int) []rune {
-	numbersBytes := make([]byte, 0)
-	for _, n := range numbers {
-		numbersBytes = strconv.AppendInt(numbersBytes, int64(n), 10)
-	}
-	seps := consistentShuffle(sepsOriginal, bytes.Runes(numbersBytes))
-
-	alphabet := make([]rune, len(alphabetOriginal))
-	copy(alphabet, alphabetOriginal)
-
-	lotterySalt := make([]byte, 0, 2*len(numbers))
+	numbersHash := 0
 	for i, n := range numbers {
-		if i > 0 {
-			lotterySalt = append(lotterySalt, '-')
-		}
-		lotterySalt = strconv.AppendInt(lotterySalt, int64(n), 10)
+		numbersHash += (n % (i + 100))
 	}
-	for _, n := range numbers {
-		lotterySalt = append(lotterySalt, '-')
-		lotterySalt = strconv.AppendInt(lotterySalt, int64((n+1)*2), 10)
-	}
-	lottery := consistentShuffle(alphabet, bytes.Runes(lotterySalt))
-	lotteryRune := lottery[0]
 
-	for i, r := range alphabet {
-		if r == lotteryRune {
-			alphabet = append([]rune{lotteryRune}, append(alphabet[:i], alphabet[i+1:]...)...)
-			break
-		}
-	}
-	saltL := append([]rune(strconv.FormatInt(int64(lotteryRune&12345), 10)), salt...)
+	result := make([]rune, 0, h.minLength)
+	lottery := alphabet[numbersHash%len(alphabet)]
+	result = append(result, lottery)
 
-	result := make([]rune, 0, minLength)
-	result = append(result, lotteryRune)
 	for i, n := range numbers {
-		alphabet = consistentShuffle(alphabet, saltL)
+		buffer := append([]rune{lottery}, append(h.salt, alphabet...)...)
+		alphabet = consistentShuffle(alphabet, buffer[:len(alphabet)])
 		hash := hash(n, alphabet)
 		result = append(result, hash...)
-		if (i + 1) < len(numbers) {
-			sepsIndex := (n + i) % len(seps)
-			result = append(result, seps[sepsIndex])
+
+		if i+1 < len(numbers) {
+			n %= int(hash[0]) + i
+			result = append(result, h.seps[n%len(h.seps)])
 		}
 	}
 
-	if len(result) < minLength {
-		guardIndex := 0
-		for i, n := range numbers {
-			guardIndex += (i + 1) * n
-		}
+	if len(result) < h.minLength {
+		guardIndex := (numbersHash + int(result[0])) % len(h.guards)
+		result = append([]rune{h.guards[guardIndex]}, result...)
 
-		guardIndex %= len(guards)
-		guard := guards[guardIndex]
-
-		result = append([]rune{guard}, result...)
-		if len(result) < minLength {
-			guardIndex = (guardIndex + len(result)) % len(guards)
-			guard = guards[guardIndex]
-			result = append(result, guard)
+		if len(result) < h.minLength {
+			guardIndex = (numbersHash + int(result[2])) % len(h.guards)
+			result = append(result, h.guards[guardIndex])
 		}
 	}
 
-	for len(result) < minLength {
-		padArray := []int{int(alphabet[1]), int(alphabet[0])}
-		padLeft := encode(padArray, alphabet, salt, sepsOriginal, guards, 0)
-		padArrayRunes := append([]rune(strconv.FormatInt(int64(padArray[0]), 10)), []rune(strconv.FormatInt(int64(padArray[1]), 10))...)
-		padRight := encode(padArray, alphabet, padArrayRunes, sepsOriginal, guards, 0)
-
-		result = append(padLeft, append(result, padRight...)...)
-		excess := len(result) - minLength
+	halfLength := len(alphabet) / 2
+	for len(result) < h.minLength {
+		alphabet = consistentShuffle(alphabet, alphabet)
+		result = append(alphabet[halfLength:], append(result, alphabet[:halfLength]...)...)
+		excess := len(result) - h.minLength
 		if excess > 0 {
-			result = result[excess/2 : excess/2+minLength]
+			result = result[excess/2 : excess/2+h.minLength]
 		}
-
-		alphabet = consistentShuffle(alphabet, append(salt, result...))
 	}
 
-	return result
+	return string(result), nil
 }
 
 // Decrypt unhashes the string passed to an array of int.
 // It is symmetric with Encrypt if the Alphabet and Salt are the same ones which were used to hash.
 // MinLength has no effect on Decrypt.
-func (h *HashID) Decrypt(hash string) []int {
-	alphabetRunes := []rune(h.Alphabet)
-	saltRunes := []rune(h.Salt)
-	hashRunes := []rune(hash)
-
-	alphabetRunes, seps, guards := getSepsAndGuards(alphabetRunes)
-
-	alphabetRunes = consistentShuffle(alphabetRunes, saltRunes)
-
-	return decode(hashRunes, alphabetRunes, saltRunes, seps, guards)
-}
-
-func decode(hash, alphabetOriginal, salt, seps, guards []rune) []int {
-	hashes := splitRunes(hash, guards)
+func (h *HashID) Decode(hash string) []int {
+	hashes := splitRunes([]rune(hash), h.guards)
 	hashIndex := 0
 	if len(hashes) == 2 || len(hashes) == 3 {
 		hashIndex = 1
-	} else {
-		hashIndex = 0
 	}
 
-	hashes = splitRunes(hashes[hashIndex], seps)
-	lotteryRune := hashes[0][0]
-	hashes[0] = hashes[0][1:]
+	result := make([]int, 0)
 
-	alphabet := make([]rune, len(alphabetOriginal))
-	copy(alphabet, alphabetOriginal)
-	for i, r := range alphabet {
-		if r == lotteryRune {
-			alphabet = append([]rune{lotteryRune}, append(alphabet[:i], alphabet[i+1:]...)...)
-			break
+	hashBreakdown := hashes[hashIndex]
+	if len(hashBreakdown) > 0 {
+		lottery := hashBreakdown[0]
+		hashBreakdown = hashBreakdown[1:]
+		hashes = splitRunes(hashBreakdown, h.seps)
+		alphabet := []rune(h.alphabet)
+		for _, subHash := range hashes {
+			buffer := append([]rune{lottery}, append(h.salt, alphabet...)...)
+			alphabet = consistentShuffle(alphabet, buffer[:len(alphabet)])
+			result = append(result, unhash(subHash, alphabet))
 		}
-	}
-
-	saltL := append([]rune(strconv.FormatInt(int64(lotteryRune&12345), 10)), salt...)
-
-	result := make([]int, len(hashes))
-	for i, subHash := range hashes {
-		alphabet = consistentShuffle(alphabet, saltL)
-		result[i] = unhash(subHash, alphabet)
 	}
 
 	return result
-}
-
-func getSepsAndGuards(alphabet []rune) ([]rune, []rune, []rune) {
-	guards := make([]rune, 0, len(sepsIndices))
-	seps := make([]rune, 0, len(alphabet))
-	for _, prime := range primes {
-		index := prime - 1 - len(seps)
-		if index < len(alphabet) {
-			seps = append(seps, alphabet[index])
-			alphabet = append(alphabet[:index], alphabet[index+1:]...)
-		} else {
-			break
-		}
-	}
-	for _, index := range sepsIndices {
-		if index < len(seps) {
-			guards = append(guards, seps[index])
-			seps = append(seps[:index], seps[index+1:]...)
-		}
-	}
-	return alphabet, seps, guards
 }
 
 func splitRunes(input, seps []rune) [][]rune {
@@ -259,33 +258,18 @@ func unhash(input, alphabet []rune) int {
 }
 
 func consistentShuffle(alphabet, salt []rune) []rune {
-	sortingArray := make([]int, len(salt))
-	for i, saltRune := range salt {
-		sortingArray[i] = int(saltRune)
-	}
-	for i, _ := range sortingArray {
-		add := true
-		for k, j := i, len(sortingArray)+i-1; k != j; k++ {
-			nextIndex := (k + 1) % len(sortingArray)
-			if add {
-				sortingArray[i] += sortingArray[nextIndex] + (k * i)
-			} else {
-				sortingArray[i] -= sortingArray[nextIndex]
-			}
-			add = !add
-		}
-		if sortingArray[i] < 0 {
-			sortingArray[i] = -sortingArray[i]
-		}
+	if len(salt) == 0 {
+		return alphabet
 	}
 
-	alphabetCopy := make([]rune, len(alphabet))
-	copy(alphabetCopy, alphabet)
-	result := make([]rune, 0, len(alphabet))
-	for i := 0; len(alphabetCopy) > 0; i++ {
-		pos := sortingArray[i%len(sortingArray)] % len(alphabetCopy)
-		result = append(result, alphabetCopy[pos])
-		alphabetCopy = append(alphabetCopy[:pos], alphabetCopy[pos+1:]...)
+	result := make([]rune, len(alphabet))
+	copy(result, alphabet)
+	for i, v, p := len(result)-1, 0, 0; i > 0; i-- {
+		p += int(salt[v])
+		j := (int(salt[v]) + v + p) % i
+		result[i], result[j] = result[j], result[i]
+		v = (v + 1) % len(salt)
 	}
+
 	return result
 }
