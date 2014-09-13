@@ -2,7 +2,7 @@
 // Generates hashes from an array of integers, eg. for YouTube like hashes
 // Setup: go get github.com/speps/go-hashids
 // Original implementations by Ivan Akimov at https://github.com/ivanakimov
-// Thanks to Rémy Oudompheng for some code review
+// Thanks to Rémy Oudompheng and Peter Hellberg for code review and fixes
 
 package hashids
 
@@ -188,8 +188,8 @@ func (h *HashID) Encode(numbers []int) (string, error) {
 }
 
 // Decode unhashes the string passed to an array of int.
-// It is symmetric with Encrypt if the Alphabet and Salt are the same ones which were used to hash.
-// MinLength has no effect on Decrypt.
+// It is symmetric with Encode if the Alphabet and Salt are the same ones which were used to hash.
+// MinLength has no effect on Decode.
 func (h *HashID) Decode(hash string) []int {
 	hashes := splitRunes([]rune(hash), h.guards)
 	hashIndex := 0
