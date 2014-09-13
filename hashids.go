@@ -11,15 +11,21 @@ import (
 	"math"
 )
 
-const Version string = "1.0.0"
-const DefaultAlphabet string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+const (
+	// Version is the version number of the library
+	Version string = "1.0.0"
 
-const minAlphabetLength int = 16
-const sepDiv float64 = 3.5
-const guardDiv float64 = 12.0
+	// DefaultAlphabet is the default alphabet used by go-hashids
+	DefaultAlphabet string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
-var sepsOriginal []rune = []rune("cfhistuCFHISTU")
+	minAlphabetLength int     = 16
+	sepDiv            float64 = 3.5
+	guardDiv          float64 = 12.0
+)
 
+var sepsOriginal = []rune("cfhistuCFHISTU")
+
+// HashID contains everything needed to encode/decode hashids
 type HashID struct {
 	alphabet  []rune
 	minLength int
@@ -28,21 +34,29 @@ type HashID struct {
 	guards    []rune
 }
 
+// HashIDData contains the information needed to generate hashids
 type HashIDData struct {
-	Alphabet  string
+	// Alphabet is the alphabet used to generate new ids
+	Alphabet string
+
+	// MinLength is the minimum length of a generated id
 	MinLength int
-	Salt      string
+
+	// Salt is the secret used to make the generated id harder to guess
+	Salt string
 }
 
-// New creates a new HashID with the DefaultAlphabet already set.
+// NewData creates a new HashIDData with the DefaultAlphabet already set.
 func NewData() *HashIDData {
 	return &HashIDData{Alphabet: DefaultAlphabet}
 }
 
+// New creates a new HashID
 func New() *HashID {
 	return NewWithData(NewData())
 }
 
+// NewWithData creates a new HashID with the provided HashIDData
 func NewWithData(data *HashIDData) *HashID {
 	if len(data.Alphabet) < minAlphabetLength {
 		panic(errors.New("alphabet must contain at least 16 characters"))
@@ -173,7 +187,7 @@ func (h *HashID) Encode(numbers []int) (string, error) {
 	return string(result), nil
 }
 
-// Decrypt unhashes the string passed to an array of int.
+// Decode unhashes the string passed to an array of int.
 // It is symmetric with Encrypt if the Alphabet and Salt are the same ones which were used to hash.
 // MinLength has no effect on Decrypt.
 func (h *HashID) Decode(hash string) []int {
