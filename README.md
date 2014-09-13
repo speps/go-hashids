@@ -43,6 +43,15 @@ func main() {
 PASS
 ```
 
+### Thanks to all the contributors
+
+* [Harm Aarts](https://github.com/haarts)
+* [Christoffer G. Thomsen](https://github.com/cgt)
+* [Peter Hellberg](https://github.com/peterhellberg)
+* [Rémy Oudompheng](https://github.com/remyoudompheng)
+
+Let me know if I forgot anyone of course.
+
 ### Changelog
 
 2014/09/13
