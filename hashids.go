@@ -169,7 +169,7 @@ func (h *HashID) Encode(numbers []int) (string, error) {
 		result = append([]rune{h.guards[guardIndex]}, result...)
 
 		if len(result) < h.minLength {
-			guardIndex = (numbersHash + int(result[2])) % len(h.guards)
+			guardIndex = (numbersHash + int(result[1])) % len(h.guards)
 			result = append(result, h.guards[guardIndex])
 		}
 	}
