@@ -241,9 +241,13 @@ func splitRunes(input, seps []rune) [][]rune {
 
 func hash(input int, alphabet []rune) []rune {
 	result := make([]rune, 0)
-	for ; input > 0; input /= len(alphabet) {
+	for {
 		r := alphabet[input%len(alphabet)]
 		result = append(result, r)
+		input /= len(alphabet)
+		if input == 0 {
+			break
+		}
 	}
 	reversed := make([]rune, len(result))
 	for i, r := range result {

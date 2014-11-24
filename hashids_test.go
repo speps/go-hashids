@@ -57,6 +57,14 @@ func TestDefaultLength(t *testing.T) {
 	}
 }
 
+func TestMinLength(t *testing.T) {
+	hdata := NewData()
+	hdata.Salt = "salt1"
+	hdata.MinLength = 10
+	hid := NewWithData(hdata)
+	hid.Encode([]int{0})
+}
+
 func TestCustomAlphabet(t *testing.T) {
 	hdata := NewData()
 	hdata.Alphabet = "PleasAkMEFoThStx"
