@@ -131,6 +131,16 @@ func NewWithData(data *HashIDData) *HashID {
 // Encode hashes an array of int to a string containing at least MinLength characters taken from the Alphabet.
 // Use Decode using the same Alphabet and Salt to get back the array of int.
 func (h *HashID) Encode(numbers []int) (string, error) {
+	numbers64 := make([]int64, 0, len(numbers))
+	for _, id := range numbers {
+		numbers64 = append(numbers64, int64(id))
+	}
+	return h.EncodeInt64(numbers64)
+}
+
+// EncodeInt64 hashes an array of int64 to a string containing at least MinLength characters taken from the Alphabet.
+// Use DecodeInt64 using the same Alphabet and Salt to get back the array of int64.
+func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 	if len(numbers) == 0 {
 		return "", errors.New("encoding empty array of numbers makes no sense")
 	}
@@ -143,13 +153,13 @@ func (h *HashID) Encode(numbers []int) (string, error) {
 	alphabet := make([]rune, len(h.alphabet))
 	copy(alphabet, h.alphabet)
 
-	numbersHash := 0
+	numbersHash := int64(0)
 	for i, n := range numbers {
-		numbersHash += (n % (i + 100))
+		numbersHash += (n % int64(i+100))
 	}
 
 	result := make([]rune, 0, h.minLength)
-	lottery := alphabet[numbersHash%len(alphabet)]
+	lottery := alphabet[numbersHash%int64(len(alphabet))]
 	result = append(result, lottery)
 
 	for i, n := range numbers {
@@ -159,17 +169,17 @@ func (h *HashID) Encode(numbers []int) (string, error) {
 		result = append(result, hash...)
 
 		if i+1 < len(numbers) {
-			n %= int(hash[0]) + i
-			result = append(result, h.seps[n%len(h.seps)])
+			n %= int64(hash[0]) + int64(i)
+			result = append(result, h.seps[n%int64(len(h.seps))])
 		}
 	}
 
 	if len(result) < h.minLength {
-		guardIndex := (numbersHash + int(result[0])) % len(h.guards)
+		guardIndex := (numbersHash + int64(result[0])) % int64(len(h.guards))
 		result = append([]rune{h.guards[guardIndex]}, result...)
 
 		if len(result) < h.minLength {
-			guardIndex = (numbersHash + int(result[2])) % len(h.guards)
+			guardIndex = (numbersHash + int64(result[2])) % int64(len(h.guards))
 			result = append(result, h.guards[guardIndex])
 		}
 	}
@@ -191,13 +201,25 @@ func (h *HashID) Encode(numbers []int) (string, error) {
 // It is symmetric with Encode if the Alphabet and Salt are the same ones which were used to hash.
 // MinLength has no effect on Decode.
 func (h *HashID) Decode(hash string) []int {
+	result64 := h.DecodeInt64(hash)
+	result := make([]int, 0, len(result64))
+	for _, id := range result64 {
+		result = append(result, int(id))
+	}
+	return result
+}
+
+// DecodeInt64 unhashes the string passed to an array of int64.
+// It is symmetric with EncodeInt64 if the Alphabet and Salt are the same ones which were used to hash.
+// MinLength has no effect on DecodeInt64.
+func (h *HashID) DecodeInt64(hash string) []int64 {
 	hashes := splitRunes([]rune(hash), h.guards)
 	hashIndex := 0
 	if len(hashes) == 2 || len(hashes) == 3 {
 		hashIndex = 1
 	}
 
-	result := make([]int, 0)
+	result := make([]int64, 0)
 
 	hashBreakdown := hashes[hashIndex]
 	if len(hashBreakdown) > 0 {
@@ -239,12 +261,12 @@ func splitRunes(input, seps []rune) [][]rune {
 	return result
 }
 
-func hash(input int, alphabet []rune) []rune {
+func hash(input int64, alphabet []rune) []rune {
 	result := make([]rune, 0)
 	for {
-		r := alphabet[input%len(alphabet)]
+		r := alphabet[input%int64(len(alphabet))]
 		result = append(result, r)
-		input /= len(alphabet)
+		input /= int64(len(alphabet))
 		if input == 0 {
 			break
 		}
@@ -256,8 +278,8 @@ func hash(input int, alphabet []rune) []rune {
 	return reversed
 }
 
-func unhash(input, alphabet []rune) int {
-	result := 0
+func unhash(input, alphabet []rune) int64 {
+	result := int64(0)
 	for i, inputRune := range input {
 		alphabetPos := -1
 		for pos, alphabetRune := range alphabet {
@@ -270,7 +292,7 @@ func unhash(input, alphabet []rune) int {
 			panic("should not happen, alphabet used for hash was different")
 		}
 
-		result += alphabetPos * int(math.Pow(float64(len(alphabet)), float64(len(input)-i-1)))
+		result += int64(alphabetPos) * int64(math.Pow(float64(len(alphabet)), float64(len(input)-i-1)))
 	}
 	return result
 }

@@ -1,6 +1,7 @@
 package hashids
 
 import (
+	"math"
 	"testing"
 )
 
@@ -17,6 +18,33 @@ func TestEncryptDecrypt(t *testing.T) {
 		t.Fatal(err)
 	}
 	dec := hid.Decode(hash)
+
+	t.Logf("%v -> %v -> %v", numbers, hash, dec)
+
+	if len(numbers) != len(dec) {
+		t.Error("lengths do not match")
+	}
+
+	for i, n := range numbers {
+		if n != dec[i] {
+			t.Fail()
+		}
+	}
+}
+
+func TestEncryptDecryptInt64(t *testing.T) {
+	hdata := NewData()
+	hdata.MinLength = 30
+	hdata.Salt = "this is my salt"
+
+	hid := NewWithData(hdata)
+
+	numbers := []int64{45, 434, 1313, 99, math.MaxInt64}
+	hash, err := hid.EncodeInt64(numbers)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dec := hid.DecodeInt64(hash)
 
 	t.Logf("%v -> %v -> %v", numbers, hash, dec)
 
