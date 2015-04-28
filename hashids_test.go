@@ -31,6 +31,46 @@ func TestEncryptDecrypt(t *testing.T) {
 	}
 }
 
+func TestEncryptWithKnownHash(t *testing.T) {
+	hdata := NewData()
+	hdata.MinLength = 0
+	hdata.Salt = "this is my salt"
+
+	hid := NewWithData(hdata)
+
+	numbers := []int{45, 434, 1313, 99}
+	hash, err := hid.Encode(numbers)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Logf("%v -> %v", numbers, hash)
+
+	if hash != "7nnhzEsDkiYa" {
+		t.Error("hash does not match expected one")
+	}
+}
+
+func TestDecryptWithKnownHash(t *testing.T) {
+	hdata := NewData()
+	hdata.MinLength = 0
+	hdata.Salt = "this is my salt"
+
+	hid := NewWithData(hdata)
+
+	hash := "7nnhzEsDkiYa"
+	numbers := hid.Decode(hash)
+
+	t.Logf("%v -> %v", hash, numbers)
+
+	expected := []int{45, 434, 1313, 99}
+	for i, n := range numbers {
+		if n != expected[i] {
+			t.Fail()
+		}
+	}
+}
+
 func TestDefaultLength(t *testing.T) {
 	hdata := NewData()
 	hdata.Salt = "this is my salt"
