@@ -49,6 +49,7 @@ PASS
 * [Christoffer G. Thomsen](https://github.com/cgt)
 * [Peter Hellberg](https://github.com/peterhellberg)
 * [Rémy Oudompheng](https://github.com/remyoudompheng)
+* [Mart Roosmaa](https://github.com/roosmaa)
 
 Let me know if I forgot anyone of course.
 
