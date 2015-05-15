@@ -21,7 +21,7 @@ func main() {
     hd.Salt = "this is my salt"
     hd.MinLength = 30
     h := hashids.NewWithData(hd)
-    e := h.Encode([]int{45, 434, 1313, 99})
+    e, _ := h.Encode([]int{45, 434, 1313, 99})
     fmt.Println(e)
     d := h.Decode(e)
     fmt.Println(d)
