@@ -1,4 +1,4 @@
-go-hashids [![Build Status](https://ci.appveyor.com/api/projects/status/1s8yeafycpa2vdaq?svg=true)](https://ci.appveyor.com/project/speps/go-hashids)
+go-hashids [![Build Status](https://ci.appveyor.com/api/projects/status/1s8yeafycpa2vdaq?svg=true)](https://ci.appveyor.com/project/speps/go-hashids) [![GoDoc](https://godoc.org/github.com/speps/go-hashids?status.svg)](https://godoc.org/github.com/speps/go-hashids)
 ==========
 
 Go (golang) v1 implementation of http://www.hashids.org
