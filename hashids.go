@@ -201,10 +201,35 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 // It is symmetric with Encode if the Alphabet and Salt are the same ones which were used to hash.
 // MinLength has no effect on Decode.
 func (h *HashID) Decode(hash string) []int {
-	result64 := h.DecodeInt64(hash)
+	result, err := h.DecodeWithError(hash)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// Decode unhashes the string passed to an array of int.
+// It is symmetric with Encode if the Alphabet and Salt are the same ones which were used to hash.
+// MinLength has no effect on Decode.
+func (h *HashID) DecodeWithError(hash string) ([]int, error) {
+	result64, err := h.DecodeInt64WithError(hash)
+	if err != nil {
+		return nil, err
+	}
 	result := make([]int, 0, len(result64))
 	for _, id := range result64 {
 		result = append(result, int(id))
+	}
+	return result, nil
+}
+
+// DecodeInt64 unhashes the string passed to an array of int64.
+// It is symmetric with EncodeInt64 if the Alphabet and Salt are the same ones which were used to hash.
+// MinLength has no effect on DecodeInt64.
+func (h *HashID) DecodeInt64(hash string) []int64 {
+	result, err := h.DecodeInt64WithError(hash)
+	if err != nil {
+		panic(err)
 	}
 	return result
 }
@@ -212,7 +237,7 @@ func (h *HashID) Decode(hash string) []int {
 // DecodeInt64 unhashes the string passed to an array of int64.
 // It is symmetric with EncodeInt64 if the Alphabet and Salt are the same ones which were used to hash.
 // MinLength has no effect on DecodeInt64.
-func (h *HashID) DecodeInt64(hash string) []int64 {
+func (h *HashID) DecodeInt64WithError(hash string) ([]int64, error) {
 	hashes := splitRunes([]rune(hash), h.guards)
 	hashIndex := 0
 	if len(hashes) == 2 || len(hashes) == 3 {
@@ -230,11 +255,15 @@ func (h *HashID) DecodeInt64(hash string) []int64 {
 		for _, subHash := range hashes {
 			buffer := append([]rune{lottery}, append(h.salt, alphabet...)...)
 			alphabet = consistentShuffle(alphabet, buffer[:len(alphabet)])
-			result = append(result, unhash(subHash, alphabet))
+			number, err := unhash(subHash, alphabet)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, number)
 		}
 	}
 
-	return result
+	return result, nil
 }
 
 func splitRunes(input, seps []rune) [][]rune {
@@ -278,7 +307,7 @@ func hash(input int64, alphabet []rune) []rune {
 	return reversed
 }
 
-func unhash(input, alphabet []rune) int64 {
+func unhash(input, alphabet []rune) (int64, error) {
 	result := int64(0)
 	for i, inputRune := range input {
 		alphabetPos := -1
@@ -289,12 +318,12 @@ func unhash(input, alphabet []rune) int64 {
 			}
 		}
 		if alphabetPos == -1 {
-			panic("should not happen, alphabet used for hash was different")
+			return 0, errors.New("alphabet used for hash was different")
 		}
 
 		result += int64(alphabetPos) * int64(math.Pow(float64(len(alphabet)), float64(len(input)-i-1)))
 	}
-	return result
+	return result, nil
 }
 
 func consistentShuffle(alphabet, salt []rune) []rune {

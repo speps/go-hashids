@@ -159,3 +159,20 @@ func TestCustomAlphabet(t *testing.T) {
 		}
 	}
 }
+
+func TestDecryptWithError(t *testing.T) {
+	hdata := NewData()
+	hdata.Alphabet = "PleasAkMEFoThStx"
+	hdata.Salt = "this is my salt"
+
+	hid := NewWithData(hdata)
+	// hash now contains a letter not in the alphabet
+	dec, err := hid.DecodeWithError("MAkhkloFAxAoskaZ")
+
+	if dec != nil {
+		t.Error("DecryptWithError should have returned nil result")
+	}
+	if err == nil {
+		t.Error("DecryptWithError should have returned error")
+	}
+}
