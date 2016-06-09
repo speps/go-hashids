@@ -7,6 +7,7 @@
 package hashids
 
 import (
+	"fmt"
 	"errors"
 	"math"
 )
