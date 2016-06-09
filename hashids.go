@@ -59,7 +59,7 @@ func New() *HashID {
 // NewWithData creates a new HashID with the provided HashIDData
 func NewWithData(data *HashIDData) *HashID {
 	if len(data.Alphabet) < minAlphabetLength {
-		panic(errors.New("alphabet must contain at least 16 characters"))
+		panic(errors.New(fmt.Sprintf("alphabet must contain at least %d characters", minAlphabetLength)))
 	}
 	// Check if all characters are unique in Alphabet
 	uniqueCheck := make(map[rune]bool, len(data.Alphabet))
