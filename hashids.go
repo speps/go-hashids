@@ -7,8 +7,8 @@
 package hashids
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
 	"math"
 )
 
@@ -198,7 +198,7 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 	return string(result), nil
 }
 
-// DEPRECATED: Use DecryptWithError instead
+// DEPRECATED: Use DecodeWithError instead
 // Decode unhashes the string passed to an array of int.
 // It is symmetric with Encode if the Alphabet and Salt are the same ones which were used to hash.
 // MinLength has no effect on Decode.
@@ -225,7 +225,7 @@ func (h *HashID) DecodeWithError(hash string) ([]int, error) {
 	return result, nil
 }
 
-// DEPRECATED: Use DecryptInt64WithError instead
+// DEPRECATED: Use DecodeInt64WithError instead
 // DecodeInt64 unhashes the string passed to an array of int64.
 // It is symmetric with EncodeInt64 if the Alphabet and Salt are the same ones which were used to hash.
 // MinLength has no effect on DecodeInt64.
