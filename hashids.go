@@ -312,7 +312,7 @@ func hash(input int64, alphabet []rune) []rune {
 
 func unhash(input, alphabet []rune) (int64, error) {
 	result := int64(0)
-	for i, inputRune := range input {
+	for _, inputRune := range input {
 		alphabetPos := -1
 		for pos, alphabetRune := range alphabet {
 			if inputRune == alphabetRune {
@@ -324,7 +324,7 @@ func unhash(input, alphabet []rune) (int64, error) {
 			return 0, errors.New("alphabet used for hash was different")
 		}
 
-		result += int64(alphabetPos) * int64(math.Pow(float64(len(alphabet)), float64(len(input)-i-1)))
+		result = result * int64(len(alphabet)) + int64(alphabetPos)
 	}
 	return result, nil
 }
