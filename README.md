@@ -31,28 +31,28 @@ func main() {
 ### Test results
 
 ```
-=== RUN   TestEncryptDecrypt
---- PASS: TestEncryptDecrypt (0.00s)
-        hashids_test.go:22: [45 434 1313 99] -> woQ2vqjnG7nnhzEsDkiYadKa3O71br -> [45 434 1313 99]
-=== RUN   TestEncryptDecryptInt64
---- PASS: TestEncryptDecryptInt64 (0.00s)
-        hashids_test.go:49: [45 434 1313 99 9223372036854775807] -> ZvGlaahBptQNfPOuPjJ51zO3wVzP01 -> [45 434 1313 99 9223372036854775807]
-=== RUN   TestEncryptWithKnownHash
---- PASS: TestEncryptWithKnownHash (0.00s)
-        hashids_test.go:75: [45 434 1313 99] -> 7nnhzEsDkiYa
-=== RUN   TestDecryptWithKnownHash
---- PASS: TestDecryptWithKnownHash (0.00s)
-        hashids_test.go:92: 7nnhzEsDkiYa -> [45 434 1313 99]
+=== RUN   TestEncodeDecode
+--- PASS: TestEncodeDecode (0.00s)
+	hashids_test.go:22: [45 434 1313 99] -> woQ2vqjnG7nnhzEsDkiYadKa3O71br -> [45 434 1313 99]
+=== RUN   TestEncodeDecodeInt64
+--- PASS: TestEncodeDecodeInt64 (0.00s)
+	hashids_test.go:49: [45 434 1313 99 9223372036854775807] -> ZvGlaahBptQNfPOuPjJ51zO3wVzP01 -> [45 434 1313 99 9223372036854775807]
+=== RUN   TestEncodeWithKnownHash
+--- PASS: TestEncodeWithKnownHash (0.00s)
+	hashids_test.go:75: [45 434 1313 99] -> 7nnhzEsDkiYa
+=== RUN   TestDecodeWithKnownHash
+--- PASS: TestDecodeWithKnownHash (0.00s)
+	hashids_test.go:92: 7nnhzEsDkiYa -> [45 434 1313 99]
 === RUN   TestDefaultLength
 --- PASS: TestDefaultLength (0.00s)
-        hashids_test.go:115: [45 434 1313 99] -> 7nnhzEsDkiYa -> [45 434 1313 99]
+	hashids_test.go:115: [45 434 1313 99] -> 7nnhzEsDkiYa -> [45 434 1313 99]
 === RUN   TestMinLength
 --- PASS: TestMinLength (0.00s)
 === RUN   TestCustomAlphabet
 --- PASS: TestCustomAlphabet (0.00s)
-        hashids_test.go:150: [45 434 1313 99] -> MAkhkloFAxAoskax -> [45 434 1313 99]
-=== RUN   TestDecryptWithError
---- PASS: TestDecryptWithError (0.00s)
+	hashids_test.go:150: [45 434 1313 99] -> MAkhkloFAxAoskax -> [45 434 1313 99]
+=== RUN   TestDecodeWithError
+--- PASS: TestDecodeWithError (0.00s)
 PASS
 ```
 
