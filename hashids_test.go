@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestEncryptDecrypt(t *testing.T) {
+func TestEncodeDecode(t *testing.T) {
 	hdata := NewData()
 	hdata.MinLength = 30
 	hdata.Salt = "this is my salt"
@@ -32,7 +32,7 @@ func TestEncryptDecrypt(t *testing.T) {
 	}
 }
 
-func TestEncryptDecryptInt64(t *testing.T) {
+func TestEncodeDecodeInt64(t *testing.T) {
 	hdata := NewData()
 	hdata.MinLength = 30
 	hdata.Salt = "this is my salt"
@@ -59,7 +59,7 @@ func TestEncryptDecryptInt64(t *testing.T) {
 	}
 }
 
-func TestEncryptWithKnownHash(t *testing.T) {
+func TestEncodeWithKnownHash(t *testing.T) {
 	hdata := NewData()
 	hdata.MinLength = 0
 	hdata.Salt = "this is my salt"
@@ -79,7 +79,7 @@ func TestEncryptWithKnownHash(t *testing.T) {
 	}
 }
 
-func TestDecryptWithKnownHash(t *testing.T) {
+func TestDecodeWithKnownHash(t *testing.T) {
 	hdata := NewData()
 	hdata.MinLength = 0
 	hdata.Salt = "this is my salt"
@@ -160,7 +160,7 @@ func TestCustomAlphabet(t *testing.T) {
 	}
 }
 
-func TestDecryptWithError(t *testing.T) {
+func TestDecodeWithError(t *testing.T) {
 	hdata := NewData()
 	hdata.Alphabet = "PleasAkMEFoThStx"
 	hdata.Salt = "this is my salt"
@@ -170,9 +170,9 @@ func TestDecryptWithError(t *testing.T) {
 	dec, err := hid.DecodeWithError("MAkhkloFAxAoskaZ")
 
 	if dec != nil {
-		t.Error("DecryptWithError should have returned nil result")
+		t.Error("DecodeWithError should have returned nil result")
 	}
 	if err == nil {
-		t.Error("DecryptWithError should have returned error")
+		t.Error("DecodeWithError should have returned error")
 	}
 }
