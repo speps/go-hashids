@@ -64,6 +64,9 @@ PASS
 * [Rémy Oudompheng](https://github.com/remyoudompheng)
 * [Mart Roosmaa](https://github.com/roosmaa)
 * [Jakub Kramarz](https://github.com/jkramarz)
+* [Zou Xifeng](https://github.com/zouxifeng)
+* [Per Persson](https://github.com/md2perpe)
+* [Baiju Muthukadan](https://github.com/baijum)
 
 Let me know if I forgot anyone of course.
 
