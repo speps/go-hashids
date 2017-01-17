@@ -63,6 +63,7 @@ PASS
 * [Peter Hellberg](https://github.com/peterhellberg)
 * [Rémy Oudompheng](https://github.com/remyoudompheng)
 * [Mart Roosmaa](https://github.com/roosmaa)
+* [Jakub Kramarz](https://github.com/jkramarz)
 
 Let me know if I forgot anyone of course.
 
