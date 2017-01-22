@@ -10,6 +10,10 @@ Original implementations by [Ivan Akimov](https://github.com/ivanakimov)
 ### Setup
 <pre>go get github.com/speps/go-hashids</pre>
 
+CLI tool :
+
+<pre>go get github.com/speps/go-hashids/cmd/hashid</pre>
+
 ### Example
 ```go
 package main
@@ -69,6 +73,7 @@ PASS
 * [Per Persson](https://github.com/md2perpe)
 * [Baiju Muthukadan](https://github.com/baijum)
 * [Pablo de la Concepción Sanz](https://github.com/pconcepcion)
+* [Olivier Mengué](https://github.com/dolmen)
 
 Let me know if I forgot anyone of course.
 

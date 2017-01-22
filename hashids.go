@@ -324,7 +324,7 @@ func unhash(input, alphabet []rune) (int64, error) {
 			return 0, errors.New("alphabet used for hash was different")
 		}
 
-		result = result * int64(len(alphabet)) + int64(alphabetPos)
+		result = result*int64(len(alphabet)) + int64(alphabetPos)
 	}
 	return result, nil
 }
