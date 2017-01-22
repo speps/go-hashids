@@ -1,3 +1,4 @@
+
 go-hashids [![Build Status](https://ci.appveyor.com/api/projects/status/1s8yeafycpa2vdaq?svg=true)](https://ci.appveyor.com/project/speps/go-hashids) [![GoDoc](https://godoc.org/github.com/speps/go-hashids?status.svg)](https://godoc.org/github.com/speps/go-hashids)
 ==========
 
@@ -67,6 +68,7 @@ PASS
 * [Zou Xifeng](https://github.com/zouxifeng)
 * [Per Persson](https://github.com/md2perpe)
 * [Baiju Muthukadan](https://github.com/baijum)
+* [Pablo de la Concepción Sanz](https://github.com/pconcepcion)
 
 Let me know if I forgot anyone of course.
 
