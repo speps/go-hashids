@@ -62,9 +62,9 @@ func TestNegativeNumberWithEncode(t *testing.T) {
 
 func TestEmptySliceWithDecode(t *testing.T) {
 	h := New()
-	v, err := h.Encode([]int{})
+	v, err := h.DecodeWithError("")
 
-	if v != "" {
+	if len(v) != 0 {
 		t.Errorf("Expected empty string and got `%s`", v)
 	}
 	if err != nil {
