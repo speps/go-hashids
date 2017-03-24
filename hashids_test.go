@@ -176,3 +176,16 @@ func TestDecodeWithError(t *testing.T) {
 		t.Error("DecodeWithError should have returned error")
 	}
 }
+
+// tests issue #28
+func TestDecodeWithError2(t *testing.T) {
+	hid := New()
+	dec, err := hid.DecodeWithError("")
+
+	if dec != nil {
+		t.Errorf("Expected no slice (nil) but got `%b`", dec)
+	}
+	if err == nil {
+		t.Errorf("Expected error")
+	}
+}
