@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strings"
 )
 
 const (
@@ -61,6 +62,9 @@ func New() *HashID {
 func NewWithData(data *HashIDData) *HashID {
 	if len(data.Alphabet) < minAlphabetLength {
 		panic(fmt.Errorf("alphabet must contain at least %d characters", minAlphabetLength))
+	}
+	if strings.Contains(data.Alphabet, " ") {
+		panic(fmt.Errorf("alphabet may not contain spaces"))
 	}
 	// Check if all characters are unique in Alphabet
 	uniqueCheck := make(map[rune]bool, len(data.Alphabet))
