@@ -54,23 +54,23 @@ func NewData() *HashIDData {
 }
 
 // New creates a new HashID
-func New() *HashID {
+func New() (*HashID, error) {
 	return NewWithData(NewData())
 }
 
 // NewWithData creates a new HashID with the provided HashIDData
-func NewWithData(data *HashIDData) *HashID {
+func NewWithData(data *HashIDData) (*HashID, error) {
 	if len(data.Alphabet) < minAlphabetLength {
-		panic(fmt.Errorf("alphabet must contain at least %d characters", minAlphabetLength))
+		return nil, fmt.Errorf("alphabet must contain at least %d characters", minAlphabetLength)
 	}
 	if strings.Contains(data.Alphabet, " ") {
-		panic(fmt.Errorf("alphabet may not contain spaces"))
+		return nil, fmt.Errorf("alphabet may not contain spaces")
 	}
 	// Check if all characters are unique in Alphabet
 	uniqueCheck := make(map[rune]bool, len(data.Alphabet))
 	for _, a := range data.Alphabet {
 		if _, found := uniqueCheck[a]; found {
-			panic(errors.New("duplicate character in alphabet"))
+			return nil, fmt.Errorf("duplicate character in alphabet: %s", string([]rune{a}))
 		}
 		uniqueCheck[a] = true
 	}
@@ -130,7 +130,7 @@ func NewWithData(data *HashIDData) *HashID {
 		salt:      salt,
 		seps:      seps,
 		guards:    guards,
-	}
+	}, nil
 }
 
 // Encode hashes an array of int to a string containing at least MinLength characters taken from the Alphabet.
@@ -268,6 +268,11 @@ func (h *HashID) DecodeInt64WithError(hash string) ([]int64, error) {
 			}
 			result = append(result, number)
 		}
+	}
+
+	sanityCheck, _ := h.EncodeInt64(result)
+	if sanityCheck != hash {
+		return result, errors.New("mismatch between encode and decode")
 	}
 
 	return result, nil
