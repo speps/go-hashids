@@ -31,6 +31,7 @@ var sepsOriginal = []rune("cfhistuCFHISTU")
 type HashID struct {
 	alphabet  []rune
 	minLength int
+	maxLength int
 	salt      []rune
 	seps      []rune
 	guards    []rune
@@ -124,13 +125,25 @@ func NewWithData(data *HashIDData) (*HashID, error) {
 		alphabet = alphabet[guardCount:]
 	}
 
-	return &HashID{
+	hid := &HashID{
 		alphabet:  alphabet,
 		minLength: data.MinLength,
 		salt:      salt,
 		seps:      seps,
 		guards:    guards,
-	}, nil
+	}
+
+	// Calculate the maximum possible string length by hashing the maximum possible id
+	encoded, err := hid.EncodeInt64([]int64{math.MaxInt64})
+	if err != nil {
+		return nil, fmt.Errorf("Unable to encode maximum int64 to find max encoded value length: %s", err)
+	}
+	hid.maxLength = len(encoded)
+	if hid.minLength > hid.maxLength {
+		hid.maxLength = hid.minLength
+	}
+
+	return hid, nil
 }
 
 // Encode hashes an array of int to a string containing at least MinLength characters taken from the Alphabet.
@@ -163,7 +176,7 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 		numbersHash += (n % int64(i+100))
 	}
 
-	result := make([]rune, 0, h.minLength)
+	result := make([]rune, 0, h.maxLength)
 	lottery := alphabet[numbersHash%int64(len(alphabet))]
 	result = append(result, lottery)
 
