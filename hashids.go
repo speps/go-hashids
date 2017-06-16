@@ -29,12 +29,12 @@ var sepsOriginal = []rune("cfhistuCFHISTU")
 
 // HashID contains everything needed to encode/decode hashids
 type HashID struct {
-	alphabet  []rune
-	minLength int
-	maxLength int
-	salt      []rune
-	seps      []rune
-	guards    []rune
+	alphabet           []rune
+	minLength          int
+	maxLengthPerNumber int
+	salt               []rune
+	seps               []rune
+	guards             []rune
 }
 
 // HashIDData contains the information needed to generate hashids
@@ -138,10 +138,7 @@ func NewWithData(data *HashIDData) (*HashID, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Unable to encode maximum int64 to find max encoded value length: %s", err)
 	}
-	hid.maxLength = len(encoded)
-	if hid.minLength > hid.maxLength {
-		hid.maxLength = hid.minLength
-	}
+	hid.maxLengthPerNumber = len(encoded)
 
 	return hid, nil
 }
@@ -176,14 +173,19 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 		numbersHash += (n % int64(i+100))
 	}
 
-	result := make([]rune, 0, h.maxLength)
+	maxRuneLength := h.maxLengthPerNumber * len(numbers)
+	if maxRuneLength < h.minLength {
+		maxRuneLength = h.minLength
+	}
+
+	result := make([]rune, 0, maxRuneLength)
 	lottery := alphabet[numbersHash%int64(len(alphabet))]
 	result = append(result, lottery)
 
 	for i, n := range numbers {
 		buffer := append([]rune{lottery}, append(h.salt, alphabet...)...)
 		alphabet = consistentShuffle(alphabet, buffer[:len(alphabet)])
-		hash := hash(n, alphabet)
+		hash := hash(n, maxRuneLength, alphabet)
 		result = append(result, hash...)
 
 		if i+1 < len(numbers) {
@@ -315,8 +317,8 @@ func splitRunes(input, seps []rune) [][]rune {
 	return result
 }
 
-func hash(input int64, alphabet []rune) []rune {
-	result := make([]rune, 0)
+func hash(input int64, maxRuneLength int, alphabet []rune) []rune {
+	result := make([]rune, 0, maxRuneLength)
 	for {
 		r := alphabet[input%int64(len(alphabet))]
 		result = append(result, r)
