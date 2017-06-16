@@ -327,11 +327,11 @@ func hash(input int64, maxRuneLength int, alphabet []rune) []rune {
 			break
 		}
 	}
-	reversed := make([]rune, len(result))
-	for i, r := range result {
-		reversed[len(result)-i-1] = r
+	for i := len(result)/2 - 1; i >= 0; i-- {
+		opp := len(result) - 1 - i
+		result[i], result[opp] = result[opp], result[i]
 	}
-	return reversed
+	return result
 }
 
 func unhash(input, alphabet []rune) (int64, error) {
