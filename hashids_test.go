@@ -175,3 +175,21 @@ func TestDecodeWithWrongSalt(t *testing.T) {
 		t.Errorf("Expected error `%s` but got `%s`", expected, err)
 	}
 }
+
+func TestAllocationsPerEncode(t *testing.T) {
+	hdata := NewData()
+	hdata.Salt = "temp"
+	hdata.MinLength = 0
+	hid, _ := NewWithData(hdata)
+
+	numbers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
+	allocsPerRun := testing.AllocsPerRun(100, func() {
+		_, err := hid.EncodeInt64(numbers)
+		if err != nil {
+			t.Errorf("Unexpected error encoding test data: %s, %v", err, numbers)
+		}
+	})
+	if allocsPerRun != 31 {
+		t.Errorf("Expected 31 allocations, got %v ", allocsPerRun)
+	}
+}
