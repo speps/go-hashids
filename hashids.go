@@ -171,6 +171,7 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 		numbersHash += (n % int64(i+100))
 	}
 
+	// TODO(cmaloney): Include seps
 	maxRuneLength := h.maxLengthPerNumber * len(numbers)
 	if maxRuneLength < h.minLength {
 		maxRuneLength = h.minLength
@@ -179,15 +180,16 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 	result := make([]rune, 0, maxRuneLength)
 	lottery := alphabet[numbersHash%int64(len(alphabet))]
 	result = append(result, lottery)
+	hashBuf := make([]rune, maxRuneLength)
 
 	for i, n := range numbers {
 		buffer := append([]rune{lottery}, append(h.salt, alphabet...)...)
 		consistentShuffleInPlace(alphabet, buffer[:len(alphabet)])
-		hash := hash(n, maxRuneLength, alphabet)
-		result = append(result, hash...)
+		hashBuf = hash(n, alphabet, hashBuf)
+		result = append(result, hashBuf...)
 
 		if i+1 < len(numbers) {
-			n %= int64(hash[0]) + int64(i)
+			n %= int64(hashBuf[0]) + int64(i)
 			result = append(result, h.seps[n%int64(len(h.seps))])
 		}
 	}
@@ -316,8 +318,8 @@ func splitRunes(input, seps []rune) [][]rune {
 	return result
 }
 
-func hash(input int64, maxRuneLength int, alphabet []rune) []rune {
-	result := make([]rune, 0, maxRuneLength)
+func hash(input int64, alphabet []rune, result []rune) []rune {
+	result = result[:0]
 	for {
 		r := alphabet[input%int64(len(alphabet))]
 		result = append(result, r)
