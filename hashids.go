@@ -285,7 +285,8 @@ func (h *HashID) DecodeInt64WithError(hash string) ([]int64, error) {
 
 	sanityCheck, _ := h.EncodeInt64(result)
 	if sanityCheck != hash {
-		return result, errors.New("mismatch between encode and decode")
+		return result, fmt.Errorf("mismatch between encode and decode: %s start %s"+
+			" re-encoded. result: %v", hash, sanityCheck, result)
 	}
 
 	return result, nil

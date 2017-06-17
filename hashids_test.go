@@ -170,7 +170,7 @@ func TestDecodeWithWrongSalt(t *testing.T) {
 
 	t.Logf("%v -> %v -> %v", numbers, hash, dec)
 
-	expected := "mismatch between encode and decode"
+	expected := "mismatch between encode and decode: ePaTMalsPMPlhxMl start MEhloASEPosaE re-encoded. result: [7 199 245 19]"
 	if err == nil || err.Error() != expected {
 		t.Errorf("Expected error `%s` but got `%s`", expected, err)
 	}
