@@ -97,7 +97,7 @@ func NewWithData(data *HashIDData) (*HashID, error) {
 			alphabet = append(alphabet[:foundIndex], alphabet[foundIndex+1:]...)
 		}
 	}
-	seps = consistentShuffle(seps, salt)
+	consistentShuffleInPlace(seps, salt)
 
 	if len(seps) == 0 || float64(len(alphabet))/float64(len(seps)) > sepDiv {
 		sepsLength := int(math.Ceil(float64(len(alphabet)) / sepDiv))
@@ -112,7 +112,7 @@ func NewWithData(data *HashIDData) (*HashID, error) {
 			seps = seps[:sepsLength]
 		}
 	}
-	alphabet = consistentShuffle(alphabet, salt)
+	consistentShuffleInPlace(alphabet, salt)
 
 	guardCount := int(math.Ceil(float64(len(alphabet)) / guardDiv))
 	var guards []rune
@@ -182,7 +182,7 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 
 	for i, n := range numbers {
 		buffer := append([]rune{lottery}, append(h.salt, alphabet...)...)
-		alphabet = consistentShuffle(alphabet, buffer[:len(alphabet)])
+		consistentShuffleInPlace(alphabet, buffer[:len(alphabet)])
 		hash := hash(n, maxRuneLength, alphabet)
 		result = append(result, hash...)
 
@@ -204,7 +204,7 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 
 	halfLength := len(alphabet) / 2
 	for len(result) < h.minLength {
-		alphabet = consistentShuffle(alphabet, alphabet)
+		consistentShuffleInPlace(alphabet, duplicateRuneSlice(alphabet))
 		result = append(alphabet[halfLength:], append(result, alphabet[:halfLength]...)...)
 		excess := len(result) - h.minLength
 		if excess > 0 {
@@ -271,10 +271,10 @@ func (h *HashID) DecodeInt64WithError(hash string) ([]int64, error) {
 		lottery := hashBreakdown[0]
 		hashBreakdown = hashBreakdown[1:]
 		hashes = splitRunes(hashBreakdown, h.seps)
-		alphabet := []rune(h.alphabet)
+		alphabet := duplicateRuneSlice(h.alphabet)
 		for _, subHash := range hashes {
 			buffer := append([]rune{lottery}, append(h.salt, alphabet...)...)
-			alphabet = consistentShuffle(alphabet, buffer[:len(alphabet)])
+			consistentShuffleInPlace(alphabet, buffer[:len(alphabet)])
 			number, err := unhash(subHash, alphabet)
 			if err != nil {
 				return nil, err
@@ -366,6 +366,20 @@ func consistentShuffle(alphabet, salt []rune) []rune {
 	}
 
 	return result
+}
+
+func consistentShuffleInPlace(alphabet []rune, salt []rune) {
+	if len(salt) == 0 {
+		return
+	}
+
+	for i, v, p := len(alphabet)-1, 0, 0; i > 0; i-- {
+		p += int(salt[v])
+		j := (int(salt[v]) + v + p) % i
+		alphabet[i], alphabet[j] = alphabet[j], alphabet[i]
+		v = (v + 1) % len(salt)
+	}
+	return
 }
 
 func duplicateRuneSlice(data []rune) []rune {

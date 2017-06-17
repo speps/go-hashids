@@ -189,7 +189,7 @@ func TestAllocationsPerEncode(t *testing.T) {
 			t.Errorf("Unexpected error encoding test data: %s, %v", err, numbers)
 		}
 	})
-	if allocsPerRun != 19 {
-		t.Errorf("Expected 19 allocations, got %v ", allocsPerRun)
+	if allocsPerRun != 15 {
+		t.Errorf("Expected 15 allocations, got %v ", allocsPerRun)
 	}
 }
