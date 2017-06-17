@@ -79,8 +79,7 @@ func NewWithData(data *HashIDData) (*HashID, error) {
 	alphabet := []rune(data.Alphabet)
 	salt := []rune(data.Salt)
 
-	seps := make([]rune, len(sepsOriginal))
-	copy(seps, sepsOriginal)
+	seps := duplicateRuneSlice(sepsOriginal)
 
 	// seps should contain only characters present in alphabet; alphabet should not contains seps
 	for i := 0; i < len(seps); i++ {
@@ -165,8 +164,7 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 		}
 	}
 
-	alphabet := make([]rune, len(h.alphabet))
-	copy(alphabet, h.alphabet)
+	alphabet := duplicateRuneSlice(h.alphabet)
 
 	numbersHash := int64(0)
 	for i, n := range numbers {
@@ -358,8 +356,7 @@ func consistentShuffle(alphabet, salt []rune) []rune {
 		return alphabet
 	}
 
-	result := make([]rune, len(alphabet))
-	copy(result, alphabet)
+	result := duplicateRuneSlice(alphabet)
 	for i, v, p := len(result)-1, 0, 0; i > 0; i-- {
 		p += int(salt[v])
 		j := (int(salt[v]) + v + p) % i
@@ -367,5 +364,11 @@ func consistentShuffle(alphabet, salt []rune) []rune {
 		v = (v + 1) % len(salt)
 	}
 
+	return result
+}
+
+func duplicateRuneSlice(data []rune) []rune {
+	result := make([]rune, len(data))
+	copy(result, data)
 	return result
 }
