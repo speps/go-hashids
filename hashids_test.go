@@ -287,3 +287,44 @@ func TestAllocationsPerEncodeMinLengthHigh(t *testing.T) {
 	checkAllocations(t, hid, append(minNumbers, minNumbers...), 12)
 	checkAllocations(t, hid, append(mixNubers, mixNubers...), 9)
 }
+
+func checkAllocationsDecode(t *testing.T, hid *HashID, values []int64, expectedAllocations float64) {
+	encoded, err := hid.EncodeInt64(values)
+	if err != nil {
+		t.Errorf("Unexpected error encoding test data: %s, %v", err, values)
+	}
+	allocsPerRun := testing.AllocsPerRun(5, func() {
+		_, err := hid.DecodeInt64WithError(encoded)
+		if err != nil {
+			t.Errorf("Unexpected error decoding test data: %s, %v", err, values)
+		}
+	})
+	if allocsPerRun != expectedAllocations {
+		t.Errorf("Expected %v allocations, got %v ", expectedAllocations, allocsPerRun)
+	}
+}
+
+func TestAllocationsDecodeTypical(t *testing.T) {
+	hdata := NewData()
+	hdata.Salt = "temp"
+	hdata.MinLength = 0
+	hid, _ := NewWithData(hdata)
+
+	singleNumber := []int64{42}
+
+	maxNumbers := []int64{math.MaxInt64, math.MaxInt64, math.MaxInt64, math.MaxInt64}
+	minNumbers := []int64{0, 0, 0, 0}
+	mixNubers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
+
+	checkAllocationsDecode(t, hid, singleNumber, 12)
+
+	// Same length, same number of allocations
+	checkAllocationsDecode(t, hid, maxNumbers, 26)
+	checkAllocationsDecode(t, hid, minNumbers, 26)
+	checkAllocationsDecode(t, hid, mixNubers, 26)
+
+	// Greater length, same number of allocation
+	checkAllocationsDecode(t, hid, append(maxNumbers, maxNumbers...), 40)
+	checkAllocationsDecode(t, hid, append(minNumbers, minNumbers...), 40)
+	checkAllocationsDecode(t, hid, append(mixNubers, mixNubers...), 40)
+}
