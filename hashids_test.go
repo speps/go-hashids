@@ -176,20 +176,41 @@ func TestDecodeWithWrongSalt(t *testing.T) {
 	}
 }
 
-func TestAllocationsPerEncode(t *testing.T) {
+func checkAllocations(t *testing.T, hid *HashID, values []int64, expectedAllocations float64) {
+	allocsPerRun := testing.AllocsPerRun(5, func() {
+		_, err := hid.EncodeInt64(values)
+		if err != nil {
+			t.Errorf("Unexpected error encoding test data: %s, %v", err, values)
+		}
+	})
+	if allocsPerRun != expectedAllocations {
+		t.Errorf("Expected %v allocations, got %v ", expectedAllocations, allocsPerRun)
+	}
+}
+
+func TestAllocationsPerEncodeTypical(t *testing.T) {
+	// TODO(cmaloney): Test MinLength bits work as expected
+	// TODO(cmaloney): nil salt works as expected
 	hdata := NewData()
 	hdata.Salt = "temp"
 	hdata.MinLength = 0
 	hid, _ := NewWithData(hdata)
 
-	numbers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
-	allocsPerRun := testing.AllocsPerRun(100, func() {
-		_, err := hid.EncodeInt64(numbers)
-		if err != nil {
-			t.Errorf("Unexpected error encoding test data: %s, %v", err, numbers)
-		}
-	})
-	if allocsPerRun != 12 {
-		t.Errorf("Expected 12 allocations, got %v ", allocsPerRun)
-	}
+	singleNumber := []int64{42}
+
+	maxNumbers := []int64{math.MaxInt64, math.MaxInt64, math.MaxInt64, math.MaxInt64}
+	minNumbers := []int64{0, 0, 0, 0}
+	mixNubers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
+
+	checkAllocations(t, hid, singleNumber, 6)
+
+	// Same length, same number of allocatoins
+	checkAllocations(t, hid, maxNumbers, 12)
+	checkAllocations(t, hid, minNumbers, 12)
+	checkAllocations(t, hid, mixNubers, 12)
+
+	// Greater length, same number of allocation
+	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 20)
+	checkAllocations(t, hid, append(minNumbers, minNumbers...), 20)
+	checkAllocations(t, hid, append(mixNubers, mixNubers...), 20)
 }
