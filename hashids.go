@@ -171,7 +171,6 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 		numbersHash += (n % int64(i+100))
 	}
 
-	// TODO(cmaloney): Include seps
 	maxRuneLength := h.maxLengthPerNumber * len(numbers)
 	if maxRuneLength < h.minLength {
 		maxRuneLength = h.minLength
