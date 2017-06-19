@@ -277,8 +277,12 @@ func (h *HashID) DecodeInt64WithError(hash string) ([]int64, error) {
 		hashBreakdown = hashBreakdown[1:]
 		hashes = splitRunes(hashBreakdown, h.seps)
 		alphabet := duplicateRuneSlice(h.alphabet)
+		buffer := make([]rune, len(alphabet)+len(h.salt)+1)
 		for _, subHash := range hashes {
-			buffer := append([]rune{lottery}, append(h.salt, alphabet...)...)
+			buffer = buffer[:1]
+			buffer[0] = lottery
+			buffer = append(buffer, h.salt...)
+			buffer = append(buffer, alphabet...)
 			consistentShuffleInPlace(alphabet, buffer[:len(alphabet)])
 			number, err := unhash(subHash, alphabet)
 			if err != nil {

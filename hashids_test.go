@@ -316,15 +316,15 @@ func TestAllocationsDecodeTypical(t *testing.T) {
 	minNumbers := []int64{0, 0, 0, 0}
 	mixNubers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
 
-	checkAllocationsDecode(t, hid, singleNumber, 12)
+	checkAllocationsDecode(t, hid, singleNumber, 11)
 
 	// Same length, same number of allocations
-	checkAllocationsDecode(t, hid, maxNumbers, 26)
-	checkAllocationsDecode(t, hid, minNumbers, 26)
-	checkAllocationsDecode(t, hid, mixNubers, 26)
+	checkAllocationsDecode(t, hid, maxNumbers, 19)
+	checkAllocationsDecode(t, hid, minNumbers, 19)
+	checkAllocationsDecode(t, hid, mixNubers, 19)
 
 	// Greater length, same number of allocation
-	checkAllocationsDecode(t, hid, append(maxNumbers, maxNumbers...), 40)
-	checkAllocationsDecode(t, hid, append(minNumbers, minNumbers...), 40)
-	checkAllocationsDecode(t, hid, append(mixNubers, mixNubers...), 40)
+	checkAllocationsDecode(t, hid, append(maxNumbers, maxNumbers...), 25)
+	checkAllocationsDecode(t, hid, append(minNumbers, minNumbers...), 25)
+	checkAllocationsDecode(t, hid, append(mixNubers, mixNubers...), 25)
 }
