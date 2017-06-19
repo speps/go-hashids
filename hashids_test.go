@@ -319,12 +319,13 @@ func TestAllocationsDecodeTypical(t *testing.T) {
 	checkAllocationsDecode(t, hid, singleNumber, 11)
 
 	// Same length, same number of allocations
-	checkAllocationsDecode(t, hid, maxNumbers, 17)
-	checkAllocationsDecode(t, hid, minNumbers, 17)
-	checkAllocationsDecode(t, hid, mixNubers, 17)
+	checkAllocationsDecode(t, hid, maxNumbers, 14)
+	checkAllocationsDecode(t, hid, minNumbers, 14)
+	checkAllocationsDecode(t, hid, mixNubers, 14)
 
-	// Greater length, same number of allocation
-	checkAllocationsDecode(t, hid, append(maxNumbers, maxNumbers...), 22)
-	checkAllocationsDecode(t, hid, append(minNumbers, minNumbers...), 22)
-	checkAllocationsDecode(t, hid, append(mixNubers, mixNubers...), 22)
+	// Greater length, same number of allocation per case. Length is long enough
+	// to not fit inisde the pre-allocated result buffer hence one extra alloc
+	checkAllocationsDecode(t, hid, append(maxNumbers, maxNumbers...), 15)
+	checkAllocationsDecode(t, hid, append(minNumbers, minNumbers...), 15)
+	checkAllocationsDecode(t, hid, append(mixNubers, mixNubers...), 15)
 }

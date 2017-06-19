@@ -315,9 +315,7 @@ func splitRunes(input, seps []rune) [][]rune {
 	inputLeft := input[:]
 	for _, splitIndex := range splitIndices {
 		splitIndex -= len(input) - len(inputLeft)
-		subInput := make([]rune, splitIndex)
-		copy(subInput, inputLeft[:splitIndex])
-		result = append(result, subInput)
+		result = append(result, inputLeft[:splitIndex])
 		inputLeft = inputLeft[splitIndex+1:]
 	}
 	result = append(result, inputLeft)
