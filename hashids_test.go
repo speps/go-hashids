@@ -202,15 +202,15 @@ func TestAllocationsPerEncodeTypical(t *testing.T) {
 	minNumbers := []int64{0, 0, 0, 0}
 	mixNubers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
 
-	checkAllocations(t, hid, singleNumber, 6)
+	checkAllocations(t, hid, singleNumber, 5)
 
 	// Same length, same number of allocations
-	checkAllocations(t, hid, maxNumbers, 9)
-	checkAllocations(t, hid, minNumbers, 9)
-	checkAllocations(t, hid, mixNubers, 9)
+	checkAllocations(t, hid, maxNumbers, 5)
+	checkAllocations(t, hid, minNumbers, 5)
+	checkAllocations(t, hid, mixNubers, 5)
 
 	// Greater length, same number of allocation
-	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 13)
-	checkAllocations(t, hid, append(minNumbers, minNumbers...), 13)
-	checkAllocations(t, hid, append(mixNubers, mixNubers...), 13)
+	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 5)
+	checkAllocations(t, hid, append(minNumbers, minNumbers...), 5)
+	checkAllocations(t, hid, append(mixNubers, mixNubers...), 5)
 }

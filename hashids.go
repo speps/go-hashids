@@ -186,7 +186,8 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 	for i, n := range numbers {
 		buffer = buffer[:1]
 		buffer[0] = lottery
-		buffer := append(buffer, append(h.salt, alphabet...)...)
+		buffer = append(buffer, h.salt...)
+		buffer = append(buffer, alphabet...)
 		consistentShuffleInPlace(alphabet, buffer[:len(alphabet)])
 		hashBuf = hash(n, alphabet, hashBuf)
 		result = append(result, hashBuf...)
