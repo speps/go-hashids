@@ -189,8 +189,6 @@ func checkAllocations(t *testing.T, hid *HashID, values []int64, expectedAllocat
 }
 
 func TestAllocationsPerEncodeTypical(t *testing.T) {
-	// TODO(cmaloney): Test MinLength bits work as expected
-	// TODO(cmaloney): nil salt works as expected
 	hdata := NewData()
 	hdata.Salt = "temp"
 	hdata.MinLength = 0
@@ -213,4 +211,79 @@ func TestAllocationsPerEncodeTypical(t *testing.T) {
 	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 5)
 	checkAllocations(t, hid, append(minNumbers, minNumbers...), 5)
 	checkAllocations(t, hid, append(mixNubers, mixNubers...), 5)
+}
+
+func TestAllocationsPerEncodeNoSalt(t *testing.T) {
+	hdata := NewData()
+	hdata.Salt = ""
+	hdata.MinLength = 0
+	hid, _ := NewWithData(hdata)
+
+	singleNumber := []int64{42}
+
+	maxNumbers := []int64{math.MaxInt64, math.MaxInt64, math.MaxInt64, math.MaxInt64}
+	minNumbers := []int64{0, 0, 0, 0}
+	mixNubers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
+
+	checkAllocations(t, hid, singleNumber, 5)
+
+	// Same length, same number of allocations
+	checkAllocations(t, hid, maxNumbers, 5)
+	checkAllocations(t, hid, minNumbers, 5)
+	checkAllocations(t, hid, mixNubers, 5)
+
+	// Greater length, same number of allocation
+	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 5)
+	checkAllocations(t, hid, append(minNumbers, minNumbers...), 5)
+	checkAllocations(t, hid, append(mixNubers, mixNubers...), 5)
+}
+
+func TestAllocationsPerEncodeMinLength(t *testing.T) {
+	hdata := NewData()
+	hdata.Salt = "temp"
+	hdata.MinLength = 10
+	hid, _ := NewWithData(hdata)
+
+	singleNumber := []int64{42}
+
+	maxNumbers := []int64{math.MaxInt64, math.MaxInt64, math.MaxInt64, math.MaxInt64}
+	minNumbers := []int64{0, 0, 0, 0}
+	mixNubers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
+
+	checkAllocations(t, hid, singleNumber, 9)
+
+	// Same length, same number of allocations
+	checkAllocations(t, hid, maxNumbers, 5)
+	checkAllocations(t, hid, minNumbers, 6)
+	checkAllocations(t, hid, mixNubers, 5)
+
+	// Greater length, same number of allocation
+	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 5)
+	checkAllocations(t, hid, append(minNumbers, minNumbers...), 5)
+	checkAllocations(t, hid, append(mixNubers, mixNubers...), 5)
+}
+
+func TestAllocationsPerEncodeMinLengthHigh(t *testing.T) {
+	hdata := NewData()
+	hdata.Salt = "temp"
+	hdata.MinLength = 100
+	hid, _ := NewWithData(hdata)
+
+	singleNumber := []int64{42}
+
+	maxNumbers := []int64{math.MaxInt64, math.MaxInt64, math.MaxInt64, math.MaxInt64}
+	minNumbers := []int64{0, 0, 0, 0}
+	mixNubers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
+
+	checkAllocations(t, hid, singleNumber, 15)
+
+	// Same length, same number of allocations
+	checkAllocations(t, hid, maxNumbers, 12)
+	checkAllocations(t, hid, minNumbers, 15)
+	checkAllocations(t, hid, mixNubers, 12)
+
+	// Greater length, same number of allocation
+	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 5)
+	checkAllocations(t, hid, append(minNumbers, minNumbers...), 12)
+	checkAllocations(t, hid, append(mixNubers, mixNubers...), 9)
 }
