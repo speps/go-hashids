@@ -319,12 +319,12 @@ func TestAllocationsDecodeTypical(t *testing.T) {
 	checkAllocationsDecode(t, hid, singleNumber, 11)
 
 	// Same length, same number of allocations
-	checkAllocationsDecode(t, hid, maxNumbers, 19)
-	checkAllocationsDecode(t, hid, minNumbers, 19)
-	checkAllocationsDecode(t, hid, mixNubers, 19)
+	checkAllocationsDecode(t, hid, maxNumbers, 17)
+	checkAllocationsDecode(t, hid, minNumbers, 17)
+	checkAllocationsDecode(t, hid, mixNubers, 17)
 
 	// Greater length, same number of allocation
-	checkAllocationsDecode(t, hid, append(maxNumbers, maxNumbers...), 25)
-	checkAllocationsDecode(t, hid, append(minNumbers, minNumbers...), 25)
-	checkAllocationsDecode(t, hid, append(mixNubers, mixNubers...), 25)
+	checkAllocationsDecode(t, hid, append(maxNumbers, maxNumbers...), 22)
+	checkAllocationsDecode(t, hid, append(minNumbers, minNumbers...), 22)
+	checkAllocationsDecode(t, hid, append(mixNubers, mixNubers...), 22)
 }

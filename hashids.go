@@ -269,7 +269,7 @@ func (h *HashID) DecodeInt64WithError(hash string) ([]int64, error) {
 		hashIndex = 1
 	}
 
-	result := make([]int64, 0)
+	result := make([]int64, 0, 10)
 
 	hashBreakdown := hashes[hashIndex]
 	if len(hashBreakdown) > 0 {
