@@ -181,9 +181,12 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 	lottery := alphabet[numbersHash%int64(len(alphabet))]
 	result = append(result, lottery)
 	hashBuf := make([]rune, maxRuneLength)
+	buffer := make([]rune, len(alphabet)+len(h.salt)+1)
 
 	for i, n := range numbers {
-		buffer := append([]rune{lottery}, append(h.salt, alphabet...)...)
+		buffer = buffer[:1]
+		buffer[0] = lottery
+		buffer := append(buffer, append(h.salt, alphabet...)...)
 		consistentShuffleInPlace(alphabet, buffer[:len(alphabet)])
 		hashBuf = hash(n, alphabet, hashBuf)
 		result = append(result, hashBuf...)
