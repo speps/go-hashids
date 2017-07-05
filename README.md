@@ -1,4 +1,5 @@
 
+
 go-hashids [![Build Status](https://ci.appveyor.com/api/projects/status/1s8yeafycpa2vdaq?svg=true)](https://ci.appveyor.com/project/speps/go-hashids) [![GoDoc](https://godoc.org/github.com/speps/go-hashids?status.svg)](https://godoc.org/github.com/speps/go-hashids)
 ==========
 
@@ -47,6 +48,7 @@ func main() {
 * [Pablo de la Concepción Sanz](https://github.com/pconcepcion)
 * [Olivier Mengué](https://github.com/dolmen)
 * [Matthew Valimaki](https://github.com/matthewvalimaki)
+* [Cody Maloney](https://github.com/cmaloney)
 
 Let me know if I forgot anyone of course.
 
