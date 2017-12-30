@@ -142,6 +142,16 @@ func NewWithData(data *HashIDData) (*HashID, error) {
 	return hid, nil
 }
 
+// Must is a helper that wraps a call to a function returning (*HashID, error)
+// and panics if the error is non-nil. It is intended for use in variable initializations
+// such as `var hid = hashids.Must(hashids.NewWithData(hd))`
+func Must(hid *HashID, err error) *HashID {
+	if err != nil {
+		panic(err)
+	}
+	return hid
+}
+
 // Encode hashes an array of int to a string containing at least MinLength characters taken from the Alphabet.
 // Use Decode using the same Alphabet and Salt to get back the array of int.
 func (h *HashID) Encode(numbers []int) (string, error) {
