@@ -326,7 +326,7 @@ func (h *HashID) DecodeHex(hash string) (string, error) {
 	ret := ""
 	for _, n := range numbers {
 		nHex := fmt.Sprintf("%X", n)
-		ret = strings.ToUpper(fmt.Sprintf("%s%s", ret, nHex[1:len(nHex)]))
+		ret = strings.ToLower(fmt.Sprintf("%s%s", ret, nHex[1:len(nHex)]))
 	}
 
 	return ret, nil
