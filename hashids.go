@@ -221,8 +221,8 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 	return string(result), nil
 }
 
-func (h *HashID) EncodeHex(hash string) (string, error) {
-	chars := []rune(hash)
+func (h *HashID) EncodeHex(hex string) (string, error) {
+	chars := []rune(hex)
 	nums := []int{}
 
 	for _, s := range chars {

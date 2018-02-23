@@ -48,6 +48,30 @@ func TestEncodeDecodeInt64(t *testing.T) {
 	}
 }
 
+func TestEncodeDecodeHex(t *testing.T) {
+	hdata := NewData()
+	hdata.MinLength = 30
+	hdata.Salt = "this is my salt"
+
+	hid, _ := NewWithData(hdata)
+	hex := "5a74d76ac89b05000e977baa"
+
+	hash, err := hid.EncodeHex(hex)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dec, err := hid.DecodeHex(hash)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Logf("%v -> %v -> %v", hex, hash, dec)
+	if !reflect.DeepEqual(hex, dec) {
+		t.Errorf("Decoded hex `%v` did not match with original `%v`", dec, hex)
+	}
+}
+
 func TestEncodeWithKnownHash(t *testing.T) {
 	hdata := NewData()
 	hdata.MinLength = 0
