@@ -6,12 +6,12 @@ import (
 )
 
 func testMinLength(minLength int, t *testing.T) {
-	numbers := []int{1, 2, 3}
+	numbers := []int64{1, 2, 3}
 	hdata := NewData()
 	hdata.MinLength = minLength
 	h, _ := NewWithData(hdata)
-	e, err := h.Encode(numbers)
-	decodedNumbers := h.Decode(e)
+	e, err := h.EncodeInt64WithError(numbers)
+	decodedNumbers, _ := h.DecodeInt64WithError(e)
 
 	if err != nil {
 		t.Errorf("Expected no error but got `%s`", err)
