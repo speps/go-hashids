@@ -1,8 +1,13 @@
 package hashids
 
 import (
+	"github.com/go-test/deep"
+	"github.com/leanovate/gopter"
+	"github.com/leanovate/gopter/gen"
+	"github.com/leanovate/gopter/prop"
 	"math"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -46,6 +51,44 @@ func TestEncodeDecodeInt64(t *testing.T) {
 	if !reflect.DeepEqual(dec, numbers) {
 		t.Errorf("Decoded numbers `%v` did not match with original `%v`", dec, numbers)
 	}
+}
+
+func TestEncodeDecodeUint64(t *testing.T) {
+	params := gopter.DefaultTestParameters()
+	params.MinSuccessfulTests = 2000
+	properties := gopter.NewProperties(params)
+
+	properties.Property("Encoding and decoding are symmetrical for uint64s", prop.ForAll(
+		func(minLength int, salt string, numbers []uint64) string {
+			hdata := NewData()
+			hdata.MinLength = minLength
+			hdata.Salt = salt
+
+			hid, err := NewWithData(hdata)
+			if err != nil {
+				return err.Error()
+			}
+
+			s, err := hid.EncodeUint64WithError(numbers)
+			if err != nil {
+				return err.Error()
+			}
+
+			roundtripped, err := hid.DecodeUint64WithError(s)
+			if err != nil {
+				return err.Error()
+			}
+
+			if diff := deep.Equal(numbers, roundtripped); diff != nil {
+				return strings.Join(diff, "\n")
+			}
+			return ""
+		}, gen.IntRange(0, math.MaxInt8), gen.AnyString(), gen.SliceOf(gen.UInt64()).SuchThat(
+			func(slice []uint64) bool {
+				return len(slice) > 0
+			})))
+
+	properties.TestingRun(t)
 }
 
 func TestEncodeWithKnownHash(t *testing.T) {
