@@ -1,8 +1,13 @@
 package hashids
 
 import (
+	"github.com/go-test/deep"
+	"github.com/leanovate/gopter"
+	"github.com/leanovate/gopter/gen"
+	"github.com/leanovate/gopter/prop"
 	"math"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -13,12 +18,12 @@ func TestEncodeDecode(t *testing.T) {
 
 	hid, _ := NewWithData(hdata)
 
-	numbers := []int{45, 434, 1313, 99}
-	hash, err := hid.Encode(numbers)
+	numbers := []int64{45, 434, 1313, 99}
+	hash, err := hid.EncodeInt64WithError(numbers)
 	if err != nil {
 		t.Fatal(err)
 	}
-	dec := hid.Decode(hash)
+	dec, _ := hid.DecodeInt64WithError(hash)
 
 	t.Logf("%v -> %v -> %v", numbers, hash, dec)
 
@@ -35,17 +40,55 @@ func TestEncodeDecodeInt64(t *testing.T) {
 	hid, _ := NewWithData(hdata)
 
 	numbers := []int64{45, 434, 1313, 99, math.MaxInt64}
-	hash, err := hid.EncodeInt64(numbers)
+	hash, err := hid.EncodeInt64WithError(numbers)
 	if err != nil {
 		t.Fatal(err)
 	}
-	dec := hid.DecodeInt64(hash)
+	dec, _ := hid.DecodeInt64WithError(hash)
 
 	t.Logf("%v -> %v -> %v", numbers, hash, dec)
 
 	if !reflect.DeepEqual(dec, numbers) {
 		t.Errorf("Decoded numbers `%v` did not match with original `%v`", dec, numbers)
 	}
+}
+
+func TestEncodeDecodeUint64(t *testing.T) {
+	params := gopter.DefaultTestParameters()
+	params.MinSuccessfulTests = 2000
+	properties := gopter.NewProperties(params)
+
+	properties.Property("Encoding and decoding are symmetrical for uint64s", prop.ForAll(
+		func(minLength int, salt string, numbers []uint64) string {
+			hdata := NewData()
+			hdata.MinLength = minLength
+			hdata.Salt = salt
+
+			hid, err := NewWithData(hdata)
+			if err != nil {
+				return err.Error()
+			}
+
+			s, err := hid.EncodeUint64WithError(numbers)
+			if err != nil {
+				return err.Error()
+			}
+
+			roundtripped, err := hid.DecodeUint64WithError(s)
+			if err != nil {
+				return err.Error()
+			}
+
+			if diff := deep.Equal(numbers, roundtripped); diff != nil {
+				return strings.Join(diff, "\n")
+			}
+			return ""
+		}, gen.IntRange(0, math.MaxInt8), gen.AnyString(), gen.SliceOf(gen.UInt64()).SuchThat(
+			func(slice []uint64) bool {
+				return len(slice) > 0
+			})))
+
+	properties.TestingRun(t)
 }
 
 func TestEncodeWithKnownHash(t *testing.T) {
@@ -55,8 +98,8 @@ func TestEncodeWithKnownHash(t *testing.T) {
 
 	hid, _ := NewWithData(hdata)
 
-	numbers := []int{45, 434, 1313, 99}
-	hash, err := hid.Encode(numbers)
+	numbers := []int64{45, 434, 1313, 99}
+	hash, err := hid.EncodeInt64WithError(numbers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,11 +119,11 @@ func TestDecodeWithKnownHash(t *testing.T) {
 	hid, _ := NewWithData(hdata)
 
 	hash := "7nnhzEsDkiYa"
-	numbers := hid.Decode(hash)
+	numbers, _ := hid.DecodeInt64WithError(hash)
 
 	t.Logf("%v -> %v", hash, numbers)
 
-	expected := []int{45, 434, 1313, 99}
+	expected := []int64{45, 434, 1313, 99}
 	if !reflect.DeepEqual(numbers, expected) {
 		t.Errorf("Decoded numbers `%v` did not match with expected `%v`", numbers, expected)
 	}
@@ -92,12 +135,12 @@ func TestDefaultLength(t *testing.T) {
 
 	hid, _ := NewWithData(hdata)
 
-	numbers := []int{45, 434, 1313, 99}
-	hash, err := hid.Encode(numbers)
+	numbers := []int64{45, 434, 1313, 99}
+	hash, err := hid.EncodeInt64WithError(numbers)
 	if err != nil {
 		t.Fatal(err)
 	}
-	dec := hid.Decode(hash)
+	dec, _ := hid.DecodeInt64WithError(hash)
 
 	t.Logf("%v -> %v -> %v", numbers, hash, dec)
 
@@ -111,7 +154,7 @@ func TestMinLength(t *testing.T) {
 	hdata.Salt = "salt1"
 	hdata.MinLength = 10
 	hid, _ := NewWithData(hdata)
-	hid.Encode([]int{0})
+	hid.EncodeInt64WithError([]int64{0})
 }
 
 func TestCustomAlphabet(t *testing.T) {
@@ -121,12 +164,13 @@ func TestCustomAlphabet(t *testing.T) {
 
 	hid, _ := NewWithData(hdata)
 
-	numbers := []int{45, 434, 1313, 99}
-	hash, err := hid.Encode(numbers)
+	numbers := []int64{45, 434, 1313, 99}
+	hash, err := hid.EncodeInt64WithError(numbers)
+
 	if err != nil {
 		t.Fatal(err)
 	}
-	dec := hid.Decode(hash)
+	dec, _ := hid.DecodeInt64WithError(hash)
 
 	t.Logf("%v -> %v -> %v", numbers, hash, dec)
 
@@ -142,10 +186,10 @@ func TestDecodeWithError(t *testing.T) {
 
 	hid, _ := NewWithData(hdata)
 	// hash now contains a letter not in the alphabet
-	dec, err := hid.DecodeWithError("MAkhkloFAxAoskaZ")
+	dec, err := hid.DecodeInt64WithError("MAkhkloFAxAoskaZ")
 
 	if dec != nil {
-		t.Error("Expected `nil` but got `%v`", dec)
+		t.Errorf("Expected `nil` but got `%v`", dec)
 	}
 	expected := "alphabet used for hash was different"
 	if err == nil || err.Error() != expected {
@@ -161,12 +205,12 @@ func TestDecodeWithWrongSalt(t *testing.T) {
 
 	hidEncode, _ := NewWithData(hdata)
 
-	numbers := []int{45, 434, 1313, 99}
-	hash, _ := hidEncode.Encode(numbers)
+	numbers := []int64{45, 434, 1313, 99}
+	hash, _ := hidEncode.EncodeInt64WithError(numbers)
 
 	hdata.Salt = "test"
 	hidDecode, _ := NewWithData(hdata)
-	dec, err := hidDecode.DecodeWithError(hash)
+	dec, err := hidDecode.DecodeInt64WithError(hash)
 
 	t.Logf("%v -> %v -> %v", numbers, hash, dec)
 
@@ -176,9 +220,9 @@ func TestDecodeWithWrongSalt(t *testing.T) {
 	}
 }
 
-func checkAllocations(t *testing.T, hid *HashID, values []int64, expectedAllocations float64) {
+func checkAllocations(t *testing.T, hid HashID, values []int64, expectedAllocations float64) {
 	allocsPerRun := testing.AllocsPerRun(5, func() {
-		_, err := hid.EncodeInt64(values)
+		_, err := hid.EncodeInt64WithError(values)
 		if err != nil {
 			t.Errorf("Unexpected error encoding test data: %s, %v", err, values)
 		}
@@ -288,8 +332,8 @@ func TestAllocationsPerEncodeMinLengthHigh(t *testing.T) {
 	checkAllocations(t, hid, append(mixNubers, mixNubers...), 9)
 }
 
-func checkAllocationsDecode(t *testing.T, hid *HashID, values []int64, expectedAllocations float64) {
-	encoded, err := hid.EncodeInt64(values)
+func checkAllocationsDecode(t *testing.T, hid HashID, values []int64, expectedAllocations float64) {
+	encoded, err := hid.EncodeInt64WithError(values)
 	if err != nil {
 		t.Errorf("Unexpected error encoding test data: %s, %v", err, values)
 	}

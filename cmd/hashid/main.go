@@ -7,10 +7,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/speps/go-hashids"
+	"github.com/simon-nuro/go-hashids"
 )
 
 func main() {
+
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr,
 			"usage:\n"+
@@ -29,7 +30,11 @@ func main() {
 	flag.StringVar(&separator, `sep`, ",", `separator for integers`)
 	flag.Parse()
 
-	codec := hashids.NewWithData(&params)
+	codec, err := hashids.NewWithData(&params)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+		return
+	}
 
 	args := os.Args[len(os.Args)-flag.NArg():]
 	if decode {
@@ -61,7 +66,7 @@ func main() {
 					continue ARGS
 				}
 			}
-			result, err := codec.EncodeInt64(ints)
+			result, err := codec.EncodeInt64WithError(ints)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "%s: %s\n", arg, err)
 			} else {

@@ -24,27 +24,27 @@ func TestSpacesInAlphabet(t *testing.T) {
 	}
 }
 
-func TestNilWithEncode(t *testing.T) {
+func TestNilWithEncodeInt64(t *testing.T) {
 	h, _ := New()
-	_, err := h.Encode(nil)
+	_, err := h.EncodeInt64WithError(nil)
 	expected := "encoding empty array of numbers makes no sense"
 	if err == nil || err.Error() != expected {
 		t.Errorf("Expected error `%s` but got `%s`", expected, err)
 	}
 }
 
-func TestEmptySliceWithEncode(t *testing.T) {
+func TestEmptySliceWithEncodeInt64(t *testing.T) {
 	h, _ := New()
-	_, err := h.Encode([]int{})
+	_, err := h.EncodeInt64WithError([]int64{})
 	expected := "encoding empty array of numbers makes no sense"
 	if err == nil || err.Error() != expected {
 		t.Errorf("Expected error `%s` but got `%s`", expected, err)
 	}
 }
 
-func TestNegativeNumberWithEncode(t *testing.T) {
+func TestNegativeNumberWithEncodeInt64(t *testing.T) {
 	h, _ := New()
-	_, err := h.Encode([]int{-1})
+	_, err := h.EncodeInt64WithError([]int64{-1})
 	expected := "negative number not supported"
 	if err == nil || err.Error() != expected {
 		t.Errorf("Expected error `%s` but got `%s`", expected, err)
