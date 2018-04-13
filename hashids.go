@@ -359,22 +359,6 @@ func unhash(input, alphabet []rune) (int64, error) {
 	return result, nil
 }
 
-func consistentShuffle(alphabet, salt []rune) []rune {
-	if len(salt) == 0 {
-		return alphabet
-	}
-
-	result := duplicateRuneSlice(alphabet)
-	for i, v, p := len(result)-1, 0, 0; i > 0; i-- {
-		p += int(salt[v])
-		j := (int(salt[v]) + v + p) % i
-		result[i], result[j] = result[j], result[i]
-		v = (v + 1) % len(salt)
-	}
-
-	return result
-}
-
 func consistentShuffleInPlace(alphabet []rune, salt []rune) {
 	if len(salt) == 0 {
 		return
