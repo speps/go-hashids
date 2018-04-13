@@ -177,6 +177,7 @@ func TestDecodeWithWrongSalt(t *testing.T) {
 }
 
 func checkAllocations(t *testing.T, hid *HashID, values []int64, expectedAllocations float64) {
+	t.Helper()
 	allocsPerRun := testing.AllocsPerRun(5, func() {
 		_, err := hid.EncodeInt64(values)
 		if err != nil {
@@ -200,17 +201,17 @@ func TestAllocationsPerEncodeTypical(t *testing.T) {
 	minNumbers := []int64{0, 0, 0, 0}
 	mixNubers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
 
-	checkAllocations(t, hid, singleNumber, 5)
+	checkAllocations(t, hid, singleNumber, 1)
 
 	// Same length, same number of allocations
-	checkAllocations(t, hid, maxNumbers, 5)
-	checkAllocations(t, hid, minNumbers, 5)
-	checkAllocations(t, hid, mixNubers, 5)
+	checkAllocations(t, hid, maxNumbers, 1)
+	checkAllocations(t, hid, minNumbers, 1)
+	checkAllocations(t, hid, mixNubers, 1)
 
 	// Greater length, same number of allocation
-	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 5)
-	checkAllocations(t, hid, append(minNumbers, minNumbers...), 5)
-	checkAllocations(t, hid, append(mixNubers, mixNubers...), 5)
+	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 1)
+	checkAllocations(t, hid, append(minNumbers, minNumbers...), 1)
+	checkAllocations(t, hid, append(mixNubers, mixNubers...), 1)
 }
 
 func TestAllocationsPerEncodeNoSalt(t *testing.T) {
@@ -225,17 +226,17 @@ func TestAllocationsPerEncodeNoSalt(t *testing.T) {
 	minNumbers := []int64{0, 0, 0, 0}
 	mixNubers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
 
-	checkAllocations(t, hid, singleNumber, 5)
+	checkAllocations(t, hid, singleNumber, 1)
 
 	// Same length, same number of allocations
-	checkAllocations(t, hid, maxNumbers, 5)
-	checkAllocations(t, hid, minNumbers, 5)
-	checkAllocations(t, hid, mixNubers, 5)
+	checkAllocations(t, hid, maxNumbers, 1)
+	checkAllocations(t, hid, minNumbers, 1)
+	checkAllocations(t, hid, mixNubers, 1)
 
 	// Greater length, same number of allocation
-	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 5)
-	checkAllocations(t, hid, append(minNumbers, minNumbers...), 5)
-	checkAllocations(t, hid, append(mixNubers, mixNubers...), 5)
+	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 1)
+	checkAllocations(t, hid, append(minNumbers, minNumbers...), 1)
+	checkAllocations(t, hid, append(mixNubers, mixNubers...), 1)
 }
 
 func TestAllocationsPerEncodeMinLength(t *testing.T) {
@@ -250,17 +251,17 @@ func TestAllocationsPerEncodeMinLength(t *testing.T) {
 	minNumbers := []int64{0, 0, 0, 0}
 	mixNubers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
 
-	checkAllocations(t, hid, singleNumber, 9)
+	checkAllocations(t, hid, singleNumber, 1)
 
 	// Same length, same number of allocations
-	checkAllocations(t, hid, maxNumbers, 5)
-	checkAllocations(t, hid, minNumbers, 6)
-	checkAllocations(t, hid, mixNubers, 5)
+	checkAllocations(t, hid, maxNumbers, 1)
+	checkAllocations(t, hid, minNumbers, 1)
+	checkAllocations(t, hid, mixNubers, 1)
 
 	// Greater length, same number of allocation
-	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 5)
-	checkAllocations(t, hid, append(minNumbers, minNumbers...), 5)
-	checkAllocations(t, hid, append(mixNubers, mixNubers...), 5)
+	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 1)
+	checkAllocations(t, hid, append(minNumbers, minNumbers...), 1)
+	checkAllocations(t, hid, append(mixNubers, mixNubers...), 1)
 }
 
 func TestAllocationsPerEncodeMinLengthHigh(t *testing.T) {
@@ -275,20 +276,21 @@ func TestAllocationsPerEncodeMinLengthHigh(t *testing.T) {
 	minNumbers := []int64{0, 0, 0, 0}
 	mixNubers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
 
-	checkAllocations(t, hid, singleNumber, 15)
+	checkAllocations(t, hid, singleNumber, 1)
 
 	// Same length, same number of allocations
-	checkAllocations(t, hid, maxNumbers, 12)
-	checkAllocations(t, hid, minNumbers, 15)
-	checkAllocations(t, hid, mixNubers, 12)
+	checkAllocations(t, hid, maxNumbers, 1)
+	checkAllocations(t, hid, minNumbers, 1)
+	checkAllocations(t, hid, mixNubers, 1)
 
 	// Greater length, same number of allocation
-	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 5)
-	checkAllocations(t, hid, append(minNumbers, minNumbers...), 12)
-	checkAllocations(t, hid, append(mixNubers, mixNubers...), 9)
+	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 1)
+	checkAllocations(t, hid, append(minNumbers, minNumbers...), 1)
+	checkAllocations(t, hid, append(mixNubers, mixNubers...), 1)
 }
 
 func checkAllocationsDecode(t *testing.T, hid *HashID, values []int64, expectedAllocations float64) {
+	t.Helper()
 	encoded, err := hid.EncodeInt64(values)
 	if err != nil {
 		t.Errorf("Unexpected error encoding test data: %s, %v", err, values)
@@ -316,16 +318,15 @@ func TestAllocationsDecodeTypical(t *testing.T) {
 	minNumbers := []int64{0, 0, 0, 0}
 	mixNubers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
 
-	checkAllocationsDecode(t, hid, singleNumber, 11)
+	checkAllocationsDecode(t, hid, singleNumber, 3)
 
 	// Same length, same number of allocations
-	checkAllocationsDecode(t, hid, maxNumbers, 14)
-	checkAllocationsDecode(t, hid, minNumbers, 14)
-	checkAllocationsDecode(t, hid, mixNubers, 14)
+	checkAllocationsDecode(t, hid, maxNumbers, 3)
+	checkAllocationsDecode(t, hid, minNumbers, 3)
+	checkAllocationsDecode(t, hid, mixNubers, 3)
 
-	// Greater length, same number of allocation per case. Length is long enough
-	// to not fit inisde the pre-allocated result buffer hence one extra alloc
-	checkAllocationsDecode(t, hid, append(maxNumbers, maxNumbers...), 15)
-	checkAllocationsDecode(t, hid, append(minNumbers, minNumbers...), 15)
-	checkAllocationsDecode(t, hid, append(mixNubers, mixNubers...), 15)
+	// Greater length, same number of allocations
+	checkAllocationsDecode(t, hid, append(maxNumbers, maxNumbers...), 3)
+	checkAllocationsDecode(t, hid, append(minNumbers, minNumbers...), 3)
+	checkAllocationsDecode(t, hid, append(mixNubers, mixNubers...), 3)
 }
