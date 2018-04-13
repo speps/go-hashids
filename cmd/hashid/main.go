@@ -29,7 +29,11 @@ func main() {
 	flag.StringVar(&separator, `sep`, ",", `separator for integers`)
 	flag.Parse()
 
-	codec := hashids.NewWithData(&params)
+	codec, err := hashids.NewWithData(&params)
+	if err != nil {
+		fmt.Printf("Error initializing hashids: %v\n", err)
+		os.Exit(1)
+	}
 
 	args := os.Args[len(os.Args)-flag.NArg():]
 	if decode {
