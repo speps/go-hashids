@@ -169,7 +169,7 @@ func TestDecodeWithError(t *testing.T) {
 	dec, err := hid.DecodeWithError("MAkhkloFAxAoskaZ")
 
 	if dec != nil {
-		t.Error("Expected `nil` but got `%v`", dec)
+		t.Errorf("Expected `nil` but got `%v`", dec)
 	}
 	expected := "alphabet used for hash was different"
 	if err == nil || err.Error() != expected {
