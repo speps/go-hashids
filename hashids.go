@@ -27,14 +27,30 @@ const (
 
 var sepsOriginal = []rune("cfhistuCFHISTU")
 
+// Hasher defines the API of a type which can encode and decode
+// HashIDs
+type Hasher interface {
+	DecodeInt64WithError(string) ([]int64, error)
+	EncodeInt64([]int64) (string, error)
+}
+
 // HashID contains everything needed to encode/decode hashids
+// Note each call to Encode/Decode will allocate buffers. To re-use buffers
+// and save significant memory usage, use a HashWorkspace
 type HashID struct {
-	alphabet           []rune
-	minLength          int
-	maxLengthPerNumber int
-	salt               []rune
-	seps               []rune
-	guards             []rune
+	alphabet              []rune
+	minLength             int
+	maxLengthPerNumber    int
+	salt                  []rune
+	seps                  []rune
+	guards                []rune
+	expectedIDNumberCount int
+}
+
+// HashWorkspace contains a hid as well as pre-allocated buffers in
+// which encoding and decoding will occur. This can significantly
+// speed up encoding/decoding of a large number of ids.
+type HashWorkspace struct {
 	// Buffers re-used for each encode/decode so that encode and
 	// decode require less memory allocations
 	buffer1       []rune
@@ -47,6 +63,29 @@ type HashID struct {
 	// buffers for rune splitting
 	splitIndiciesBuffer []int
 	splitResult         [][]rune
+
+	hid *HashID
+}
+
+// NewHashWorkspace constrcuts a HashWorkspace which will has ids
+// how the HashID would have, but using pre-allocated buffers. While
+// HashID is safe to use across multiple goroutines simultaneously to
+// encode/decode IDs, HashWorkspace is not. That said, there will be
+// far less overall memory allocations when a HashWorkspace is used
+func (h *HashID) NewHashWorkspace() *HashWorkspace {
+	return &HashWorkspace{
+		buffer1:       make([]rune, 0, len(h.alphabet)),
+		buffer2:       make([]rune, 0, len(h.alphabet)),
+		bufferResult:  make([]rune, h.maxLengthPerNumber*h.expectedIDNumberCount),
+		bufferResult2: make([]rune, h.maxLengthPerNumber*h.expectedIDNumberCount),
+		bufferHash:    make([]rune, h.maxLengthPerNumber*h.expectedIDNumberCount),
+		workBuffer:    make([]rune, len(h.alphabet)+len(h.salt)+1),
+
+		splitIndiciesBuffer: make([]int, 0, h.expectedIDNumberCount),
+		splitResult:         make([][]rune, 0, h.expectedIDNumberCount),
+
+		hid: h,
+	}
 }
 
 // HashIDData contains the information needed to generate hashids
@@ -62,7 +101,7 @@ type HashIDData struct {
 
 	// Specifies the expected number of integers for every encode, used to
 	// reduce memory allocations. If left unset, defaults to 8
-	ExpectedIdNumberCount int
+	ExpectedIDNumberCount int
 }
 
 // NewData creates a new HashIDData with the DefaultAlphabet already set.
@@ -142,14 +181,11 @@ func NewWithData(data *HashIDData) (*HashID, error) {
 	}
 
 	hid := &HashID{
-		alphabet:   alphabet,
-		minLength:  data.MinLength,
-		salt:       salt,
-		seps:       seps,
-		guards:     guards,
-		buffer1:    make([]rune, 0, len(alphabet)),
-		buffer2:    make([]rune, 0, len(alphabet)),
-		workBuffer: make([]rune, len(alphabet)+len(salt)+1),
+		alphabet:  alphabet,
+		minLength: data.MinLength,
+		salt:      salt,
+		seps:      seps,
+		guards:    guards,
 	}
 
 	// Calculate the maximum possible string length by hashing the maximum possible id
@@ -159,15 +195,13 @@ func NewWithData(data *HashIDData) (*HashID, error) {
 	}
 	hid.maxLengthPerNumber = len(encoded) + 1
 
-	// allocate so on average we should fit in the result buffer.
-	if data.ExpectedIdNumberCount == 0 {
-		data.ExpectedIdNumberCount = 8
+	// Estimated id integers per id, helps with figuring out
+	// pre-allcocations when using hash workspaces. Default
+	// to 8 as that isn't big buffers but should catch most usage.
+	hid.expectedIDNumberCount = data.ExpectedIDNumberCount
+	if hid.expectedIDNumberCount == 0 {
+		hid.expectedIDNumberCount = 8
 	}
-	hid.bufferResult = make([]rune, hid.maxLengthPerNumber*data.ExpectedIdNumberCount)
-	hid.bufferResult2 = make([]rune, hid.maxLengthPerNumber*data.ExpectedIdNumberCount)
-	hid.bufferHash = make([]rune, hid.maxLengthPerNumber*data.ExpectedIdNumberCount)
-	hid.splitIndiciesBuffer = make([]int, 0, data.ExpectedIdNumberCount)
-	hid.splitResult = make([][]rune, 0, data.ExpectedIdNumberCount)
 	return hid, nil
 }
 
@@ -184,6 +218,13 @@ func (h *HashID) Encode(numbers []int) (string, error) {
 // EncodeInt64 hashes an array of int64 to a string containing at least MinLength characters taken from the Alphabet.
 // Use DecodeInt64 using the same Alphabet and Salt to get back the array of int64.
 func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
+	hw := h.NewHashWorkspace()
+	return hw.EncodeInt64(numbers)
+}
+
+// EncodeInt64 hashes an array of int64 to a string containing at least MinLength characters taken from the Alphabet.
+// Use DecodeInt64 using the same Alphabet and Salt to get back the array of int64.
+func (hw *HashWorkspace) EncodeInt64(numbers []int64) (string, error) {
 	if len(numbers) == 0 {
 		return "", errors.New("encoding empty array of numbers makes no sense")
 	}
@@ -192,8 +233,9 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 			return "", errors.New("negative number not supported")
 		}
 	}
+	h := hw.hid
 
-	alphabet := append(h.buffer1[:0], h.alphabet...)
+	alphabet := append(hw.buffer1[:0], h.alphabet...)
 
 	numbersHash := int64(0)
 	for i, n := range numbers {
@@ -205,11 +247,11 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 		maxRuneLength = h.minLength
 	}
 
-	result := h.bufferResult[:0]
+	result := hw.bufferResult[:0]
 	lottery := alphabet[numbersHash%int64(len(alphabet))]
 	result = append(result, lottery)
-	hashBuf := h.bufferHash[:0]
-	buffer := h.workBuffer[:1]
+	hashBuf := hw.bufferHash[:0]
+	buffer := hw.workBuffer[:1]
 
 	for i, n := range numbers {
 		buffer = buffer[:1]
@@ -228,7 +270,7 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 
 	// Two result buffers are used here, swapping between which one is
 	// being copied from/to, decreasing need to allocate memory.
-	cur, next := result, h.bufferResult2
+	cur, next := result, hw.bufferResult2
 	if len(result) < h.minLength {
 		guardIndex := (numbersHash + int64(result[0])) % int64(len(h.guards))
 		guardedResult := next[:0]
@@ -246,7 +288,7 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 
 	halfLength := len(alphabet) / 2
 	for len(result) < h.minLength {
-		alphabet2 := append(h.buffer2[:0], alphabet...)
+		alphabet2 := append(hw.buffer2[:0], alphabet...)
 		consistentShuffleInPlace(alphabet, alphabet2)
 		extendedResult := append(next[:0], alphabet[halfLength:]...)
 		extendedResult = append(extendedResult, result...)
@@ -262,7 +304,7 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 	return string(result), nil
 }
 
-// DEPRECATED: Use DecodeWithError instead
+// Decode DEPRECATED: Use DecodeWithError instead
 // Decode unhashes the string passed to an array of int.
 // It is symmetric with Encode if the Alphabet and Salt are the same ones which were used to hash.
 // MinLength has no effect on Decode.
@@ -274,7 +316,7 @@ func (h *HashID) Decode(hash string) []int {
 	return result
 }
 
-// Decode unhashes the string passed to an array of int.
+// DecodeWithError unhashes the string passed to an array of int.
 // It is symmetric with Encode if the Alphabet and Salt are the same ones which were used to hash.
 // MinLength has no effect on Decode.
 func (h *HashID) DecodeWithError(hash string) ([]int, error) {
@@ -289,7 +331,7 @@ func (h *HashID) DecodeWithError(hash string) ([]int, error) {
 	return result, nil
 }
 
-// DEPRECATED: Use DecodeInt64WithError instead
+// DecodeInt64 DEPRECATED: Use DecodeInt64WithError instead
 // DecodeInt64 unhashes the string passed to an array of int64.
 // It is symmetric with EncodeInt64 if the Alphabet and Salt are the same ones which were used to hash.
 // MinLength has no effect on DecodeInt64.
@@ -301,11 +343,20 @@ func (h *HashID) DecodeInt64(hash string) []int64 {
 	return result
 }
 
-// DecodeInt64 unhashes the string passed to an array of int64.
+// DecodeInt64WithError unhashes the string passed to an array of int64.
 // It is symmetric with EncodeInt64 if the Alphabet and Salt are the same ones which were used to hash.
 // MinLength has no effect on DecodeInt64.
 func (h *HashID) DecodeInt64WithError(hash string) ([]int64, error) {
-	hashes := h.splitRunes([]rune(hash), h.guards)
+	hw := h.NewHashWorkspace()
+	return hw.DecodeInt64WithError(hash)
+}
+
+// DecodeInt64WithError unhashes the string passed to an array of int64.
+// It is symmetric with EncodeInt64 if the Alphabet and Salt are the same ones which were used to hash.
+// MinLength has no effect on DecodeInt64.
+func (hw *HashWorkspace) DecodeInt64WithError(hash string) ([]int64, error) {
+	h := hw.hid
+	hashes := hw.splitRunes([]rune(hash), h.guards)
 	hashIndex := 0
 	if len(hashes) == 2 || len(hashes) == 3 {
 		hashIndex = 1
@@ -317,9 +368,9 @@ func (h *HashID) DecodeInt64WithError(hash string) ([]int64, error) {
 	if len(hashBreakdown) > 0 {
 		lottery := hashBreakdown[0]
 		hashBreakdown = hashBreakdown[1:]
-		hashes = h.splitRunes(hashBreakdown, h.seps)
-		alphabet := append(h.buffer1[:0], h.alphabet...)
-		buffer := h.workBuffer
+		hashes = hw.splitRunes(hashBreakdown, h.seps)
+		alphabet := append(hw.buffer1[:0], h.alphabet...)
+		buffer := hw.workBuffer
 		for _, subHash := range hashes {
 			buffer = buffer[:1]
 			buffer[0] = lottery
@@ -334,7 +385,7 @@ func (h *HashID) DecodeInt64WithError(hash string) ([]int64, error) {
 		}
 	}
 
-	sanityCheck, _ := h.EncodeInt64(result)
+	sanityCheck, _ := hw.EncodeInt64(result)
 	if sanityCheck != hash {
 		return result, fmt.Errorf("mismatch between encode and decode: %s start %s"+
 			" re-encoded. result: %v", hash, sanityCheck, result)
@@ -343,8 +394,8 @@ func (h *HashID) DecodeInt64WithError(hash string) ([]int64, error) {
 	return result, nil
 }
 
-func (h *HashID) splitRunes(input, seps []rune) [][]rune {
-	splitIndices := h.splitIndiciesBuffer[:0]
+func (hw *HashWorkspace) splitRunes(input, seps []rune) [][]rune {
+	splitIndices := hw.splitIndiciesBuffer[:0]
 	for i, inputRune := range input {
 		for _, sepsRune := range seps {
 			if inputRune == sepsRune {
@@ -353,7 +404,7 @@ func (h *HashID) splitRunes(input, seps []rune) [][]rune {
 		}
 	}
 
-	result := h.splitResult[:0]
+	result := hw.splitResult[:0]
 	inputLeft := input[:]
 	for _, splitIndex := range splitIndices {
 		splitIndex -= len(input) - len(inputLeft)
