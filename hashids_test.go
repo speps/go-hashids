@@ -145,7 +145,7 @@ func TestDecodeWithError(t *testing.T) {
 	dec, err := hid.DecodeWithError("MAkhkloFAxAoskaZ")
 
 	if dec != nil {
-		t.Error("Expected `nil` but got `%v`", dec)
+		t.Errorf("Expected `nil` but got `%v`", dec)
 	}
 	expected := "alphabet used for hash was different"
 	if err == nil || err.Error() != expected {
@@ -176,7 +176,8 @@ func TestDecodeWithWrongSalt(t *testing.T) {
 	}
 }
 
-func checkAllocations(t *testing.T, hid *HashID, values []int64, expectedAllocations float64) {
+func checkAllocations(t *testing.T, hid Hasher, values []int64, expectedAllocations float64) {
+	t.Helper()
 	allocsPerRun := testing.AllocsPerRun(5, func() {
 		_, err := hid.EncodeInt64(values)
 		if err != nil {
@@ -200,17 +201,45 @@ func TestAllocationsPerEncodeTypical(t *testing.T) {
 	minNumbers := []int64{0, 0, 0, 0}
 	mixNubers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
 
-	checkAllocations(t, hid, singleNumber, 5)
+	checkAllocations(t, hid, singleNumber, 9)
 
 	// Same length, same number of allocations
-	checkAllocations(t, hid, maxNumbers, 5)
-	checkAllocations(t, hid, minNumbers, 5)
-	checkAllocations(t, hid, mixNubers, 5)
+	checkAllocations(t, hid, maxNumbers, 9)
+	checkAllocations(t, hid, minNumbers, 9)
+	checkAllocations(t, hid, mixNubers, 9)
 
 	// Greater length, same number of allocation
-	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 5)
-	checkAllocations(t, hid, append(minNumbers, minNumbers...), 5)
-	checkAllocations(t, hid, append(mixNubers, mixNubers...), 5)
+	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 9)
+	checkAllocations(t, hid, append(minNumbers, minNumbers...), 9)
+	checkAllocations(t, hid, append(mixNubers, mixNubers...), 9)
+}
+
+// When using a hash workspace there should b e no allcations per individual encode/decodes other
+// than the final result string.
+func TestAllocationsPerEncodeTypicalUsingWorkspace(t *testing.T) {
+	hdata := NewData()
+	hdata.Salt = "temp"
+	hdata.MinLength = 0
+	hid, _ := NewWithData(hdata)
+	hw := hid.NewHashWorkspace()
+
+	singleNumber := []int64{42}
+
+	maxNumbers := []int64{math.MaxInt64, math.MaxInt64, math.MaxInt64, math.MaxInt64}
+	minNumbers := []int64{0, 0, 0, 0}
+	mixNubers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
+
+	checkAllocations(t, hw, singleNumber, 1)
+
+	// Same length, same number of allocations
+	checkAllocations(t, hw, maxNumbers, 1)
+	checkAllocations(t, hw, minNumbers, 1)
+	checkAllocations(t, hw, mixNubers, 1)
+
+	// Greater length, same number of allocation
+	checkAllocations(t, hw, append(maxNumbers, maxNumbers...), 1)
+	checkAllocations(t, hw, append(minNumbers, minNumbers...), 1)
+	checkAllocations(t, hw, append(mixNubers, mixNubers...), 1)
 }
 
 func TestAllocationsPerEncodeNoSalt(t *testing.T) {
@@ -218,6 +247,7 @@ func TestAllocationsPerEncodeNoSalt(t *testing.T) {
 	hdata.Salt = ""
 	hdata.MinLength = 0
 	hid, _ := NewWithData(hdata)
+	hw := hid.NewHashWorkspace()
 
 	singleNumber := []int64{42}
 
@@ -225,17 +255,17 @@ func TestAllocationsPerEncodeNoSalt(t *testing.T) {
 	minNumbers := []int64{0, 0, 0, 0}
 	mixNubers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
 
-	checkAllocations(t, hid, singleNumber, 5)
+	checkAllocations(t, hw, singleNumber, 1)
 
 	// Same length, same number of allocations
-	checkAllocations(t, hid, maxNumbers, 5)
-	checkAllocations(t, hid, minNumbers, 5)
-	checkAllocations(t, hid, mixNubers, 5)
+	checkAllocations(t, hw, maxNumbers, 1)
+	checkAllocations(t, hw, minNumbers, 1)
+	checkAllocations(t, hw, mixNubers, 1)
 
 	// Greater length, same number of allocation
-	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 5)
-	checkAllocations(t, hid, append(minNumbers, minNumbers...), 5)
-	checkAllocations(t, hid, append(mixNubers, mixNubers...), 5)
+	checkAllocations(t, hw, append(maxNumbers, maxNumbers...), 1)
+	checkAllocations(t, hw, append(minNumbers, minNumbers...), 1)
+	checkAllocations(t, hw, append(mixNubers, mixNubers...), 1)
 }
 
 func TestAllocationsPerEncodeMinLength(t *testing.T) {
@@ -243,6 +273,7 @@ func TestAllocationsPerEncodeMinLength(t *testing.T) {
 	hdata.Salt = "temp"
 	hdata.MinLength = 10
 	hid, _ := NewWithData(hdata)
+	hw := hid.NewHashWorkspace()
 
 	singleNumber := []int64{42}
 
@@ -250,17 +281,17 @@ func TestAllocationsPerEncodeMinLength(t *testing.T) {
 	minNumbers := []int64{0, 0, 0, 0}
 	mixNubers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
 
-	checkAllocations(t, hid, singleNumber, 9)
+	checkAllocations(t, hw, singleNumber, 1)
 
 	// Same length, same number of allocations
-	checkAllocations(t, hid, maxNumbers, 5)
-	checkAllocations(t, hid, minNumbers, 6)
-	checkAllocations(t, hid, mixNubers, 5)
+	checkAllocations(t, hw, maxNumbers, 1)
+	checkAllocations(t, hw, minNumbers, 1)
+	checkAllocations(t, hw, mixNubers, 1)
 
 	// Greater length, same number of allocation
-	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 5)
-	checkAllocations(t, hid, append(minNumbers, minNumbers...), 5)
-	checkAllocations(t, hid, append(mixNubers, mixNubers...), 5)
+	checkAllocations(t, hw, append(maxNumbers, maxNumbers...), 1)
+	checkAllocations(t, hw, append(minNumbers, minNumbers...), 1)
+	checkAllocations(t, hw, append(mixNubers, mixNubers...), 1)
 }
 
 func TestAllocationsPerEncodeMinLengthHigh(t *testing.T) {
@@ -268,6 +299,7 @@ func TestAllocationsPerEncodeMinLengthHigh(t *testing.T) {
 	hdata.Salt = "temp"
 	hdata.MinLength = 100
 	hid, _ := NewWithData(hdata)
+	hw := hid.NewHashWorkspace()
 
 	singleNumber := []int64{42}
 
@@ -275,20 +307,21 @@ func TestAllocationsPerEncodeMinLengthHigh(t *testing.T) {
 	minNumbers := []int64{0, 0, 0, 0}
 	mixNubers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
 
-	checkAllocations(t, hid, singleNumber, 15)
+	checkAllocations(t, hw, singleNumber, 1)
 
 	// Same length, same number of allocations
-	checkAllocations(t, hid, maxNumbers, 12)
-	checkAllocations(t, hid, minNumbers, 15)
-	checkAllocations(t, hid, mixNubers, 12)
+	checkAllocations(t, hw, maxNumbers, 1)
+	checkAllocations(t, hw, minNumbers, 1)
+	checkAllocations(t, hw, mixNubers, 1)
 
 	// Greater length, same number of allocation
-	checkAllocations(t, hid, append(maxNumbers, maxNumbers...), 5)
-	checkAllocations(t, hid, append(minNumbers, minNumbers...), 12)
-	checkAllocations(t, hid, append(mixNubers, mixNubers...), 9)
+	checkAllocations(t, hw, append(maxNumbers, maxNumbers...), 1)
+	checkAllocations(t, hw, append(minNumbers, minNumbers...), 1)
+	checkAllocations(t, hw, append(mixNubers, mixNubers...), 1)
 }
 
-func checkAllocationsDecode(t *testing.T, hid *HashID, values []int64, expectedAllocations float64) {
+func checkAllocationsDecode(t *testing.T, hid Hasher, values []int64, expectedAllocations float64) {
+	t.Helper()
 	encoded, err := hid.EncodeInt64(values)
 	if err != nil {
 		t.Errorf("Unexpected error encoding test data: %s, %v", err, values)
@@ -319,13 +352,38 @@ func TestAllocationsDecodeTypical(t *testing.T) {
 	checkAllocationsDecode(t, hid, singleNumber, 11)
 
 	// Same length, same number of allocations
-	checkAllocationsDecode(t, hid, maxNumbers, 14)
-	checkAllocationsDecode(t, hid, minNumbers, 14)
-	checkAllocationsDecode(t, hid, mixNubers, 14)
+	checkAllocationsDecode(t, hid, maxNumbers, 11)
+	checkAllocationsDecode(t, hid, minNumbers, 11)
+	checkAllocationsDecode(t, hid, mixNubers, 11)
 
-	// Greater length, same number of allocation per case. Length is long enough
-	// to not fit inisde the pre-allocated result buffer hence one extra alloc
-	checkAllocationsDecode(t, hid, append(maxNumbers, maxNumbers...), 15)
-	checkAllocationsDecode(t, hid, append(minNumbers, minNumbers...), 15)
-	checkAllocationsDecode(t, hid, append(mixNubers, mixNubers...), 15)
+	// Greater length, same number of allocations
+	checkAllocationsDecode(t, hid, append(maxNumbers, maxNumbers...), 11)
+	checkAllocationsDecode(t, hid, append(minNumbers, minNumbers...), 11)
+	checkAllocationsDecode(t, hid, append(mixNubers, mixNubers...), 11)
+}
+
+func TestAllocationsDecodeTypicalHashWorkspace(t *testing.T) {
+	hdata := NewData()
+	hdata.Salt = "temp"
+	hdata.MinLength = 0
+	hid, _ := NewWithData(hdata)
+	hw := hid.NewHashWorkspace()
+
+	singleNumber := []int64{42}
+
+	maxNumbers := []int64{math.MaxInt64, math.MaxInt64, math.MaxInt64, math.MaxInt64}
+	minNumbers := []int64{0, 0, 0, 0}
+	mixNubers := []int64{math.MaxInt64, 0, 1024, math.MaxInt64 / 2}
+
+	checkAllocationsDecode(t, hw, singleNumber, 3)
+
+	// Same length, same number of allocations
+	checkAllocationsDecode(t, hw, maxNumbers, 3)
+	checkAllocationsDecode(t, hw, minNumbers, 3)
+	checkAllocationsDecode(t, hw, mixNubers, 3)
+
+	// Greater length, same number of allocations
+	checkAllocationsDecode(t, hw, append(maxNumbers, maxNumbers...), 3)
+	checkAllocationsDecode(t, hw, append(minNumbers, minNumbers...), 3)
+	checkAllocationsDecode(t, hw, append(mixNubers, mixNubers...), 3)
 }
