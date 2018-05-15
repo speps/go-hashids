@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 )
 
@@ -220,6 +221,24 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 	return string(result), nil
 }
 
+// EncodeHex hashes a hexadecimal string to a string containing at least MinLength characters taken from the Alphabet.
+// A hexadecimal string should not contain the 0x prefix.
+// Use DecodeHex using the same Alphabet and Salt to get back the hexadecimal string.
+func (h *HashID) EncodeHex(hex string) (string, error) {
+	chars := []rune(hex)
+	nums := []int{}
+
+	for _, s := range chars {
+		n, err := strconv.ParseInt(fmt.Sprintf("1%s", string(s)), 16, 64)
+		if err != nil {
+			return "", err
+		}
+		nums = append(nums, int(n))
+	}
+
+	return h.Encode(nums)
+}
+
 // DEPRECATED: Use DecodeWithError instead
 // Decode unhashes the string passed to an array of int.
 // It is symmetric with Encode if the Alphabet and Salt are the same ones which were used to hash.
@@ -299,6 +318,23 @@ func (h *HashID) DecodeInt64WithError(hash string) ([]int64, error) {
 	}
 
 	return result, nil
+}
+
+// DecodeHex unhashes the string passed to a hexadecimal string.
+// It is symmetric with EncodeHex if the Alphabet and Salt are the same ones which were used to hash.
+func (h *HashID) DecodeHex(hash string) (string, error) {
+	numbers, err := h.DecodeInt64WithError(hash)
+	if err != nil {
+		return "", err
+	}
+
+	ret := ""
+	for _, n := range numbers {
+		nHex := fmt.Sprintf("%X", n)
+		ret = strings.ToLower(fmt.Sprintf("%s%s", ret, nHex[1:len(nHex)]))
+	}
+
+	return ret, nil
 }
 
 func splitRunes(input, seps []rune) [][]rune {
