@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"strconv"
 	"strings"
 )
 
@@ -225,15 +224,23 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 // A hexadecimal string should not contain the 0x prefix.
 // Use DecodeHex using the same Alphabet and Salt to get back the hexadecimal string.
 func (h *HashID) EncodeHex(hex string) (string, error) {
-	chars := []rune(hex)
-	nums := []int{}
+	nums := make([]int, len(hex))
 
-	for _, s := range chars {
-		n, err := strconv.ParseInt(fmt.Sprintf("1%s", string(s)), 16, 64)
-		if err != nil {
-			return "", err
+	for i := 0; i < len(hex); i++ {
+		b := hex[i]
+		switch {
+		case (b >= '0') && (b <= '9'):
+			b -= '0'
+		case (b >= 'a') && (b <= 'f'):
+			b -= 'a' - 'A'
+			fallthrough
+		case (b >= 'A') && (b <= 'F'):
+			b -= ('A' - 0xA)
+		default:
+			return "", errors.New("invalid hex digit")
 		}
-		nums = append(nums, int(n))
+		// Each int is in range [16, 31]
+		nums[i] = 0x10 + int(b)
 	}
 
 	return h.Encode(nums)
