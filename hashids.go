@@ -335,13 +335,15 @@ func (h *HashID) DecodeHex(hash string) (string, error) {
 		return "", err
 	}
 
-	ret := ""
-	for _, n := range numbers {
-		nHex := fmt.Sprintf("%X", n)
-		ret = strings.ToLower(fmt.Sprintf("%s%s", ret, nHex[1:len(nHex)]))
+	const hex = "0123456789abcdef"
+	b := make([]byte, len(numbers))
+	for i, n := range numbers {
+		if n < 0x10 || n > 0x1f {
+			return "", errors.New("invalid number")
+		}
+		b[i] = hex[n-0x10]
 	}
-
-	return ret, nil
+	return string(b), nil
 }
 
 func splitRunes(input, seps []rune) [][]rune {
