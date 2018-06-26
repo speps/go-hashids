@@ -223,6 +223,8 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 // EncodeHex hashes a hexadecimal string to a string containing at least MinLength characters taken from the Alphabet.
 // A hexadecimal string should not contain the 0x prefix.
 // Use DecodeHex using the same Alphabet and Salt to get back the hexadecimal string.
+//
+// Each hex nibble is encoded as an integer in range [16, 31].
 func (h *HashID) EncodeHex(hex string) (string, error) {
 	nums := make([]int, len(hex))
 
@@ -329,6 +331,8 @@ func (h *HashID) DecodeInt64WithError(hash string) ([]int64, error) {
 
 // DecodeHex unhashes the string passed to a hexadecimal string.
 // It is symmetric with EncodeHex if the Alphabet and Salt are the same ones which were used to hash.
+//
+// Each hex nibble is decoded from an integer in range [16, 31].
 func (h *HashID) DecodeHex(hash string) (string, error) {
 	numbers, err := h.DecodeInt64WithError(hash)
 	if err != nil {
