@@ -4,6 +4,7 @@ import (
 	"math"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestEncodeDecode(t *testing.T) {
@@ -42,6 +43,28 @@ func TestEncodeDecodeInt64(t *testing.T) {
 	dec := hid.DecodeInt64(hash)
 
 	t.Logf("%v -> %v -> %v", numbers, hash, dec)
+
+	if !reflect.DeepEqual(dec, numbers) {
+		t.Errorf("Decoded numbers `%v` did not match with original `%v`", dec, numbers)
+	}
+}
+
+func TestEncodeDecodeEpoch(t *testing.T) {
+	hdata := NewData()
+	hdata.MinLength = 30
+	hdata.Salt = "this is my salt"
+
+	hid, _ := NewWithData(hdata)
+
+	epoch := time.Now().Unix()
+	numbers := []int64{epoch}
+	hash, err := hid.EncodeInt64(numbers)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dec := hid.DecodeInt64(hash)
+
+	t.Logf("%v -> %v -> %v", time.Unix(epoch, 0), hash, time.Unix(dec[0], 0))
 
 	if !reflect.DeepEqual(dec, numbers) {
 		t.Errorf("Decoded numbers `%v` did not match with original `%v`", dec, numbers)
