@@ -73,7 +73,7 @@ func TestEncodeDecodeEpoch(t *testing.T) {
 
 func TestEncodeDecodeHex(t *testing.T) {
 	hdata := NewData()
-	hdata.MinLength = 30
+	hdata.MinLength = 8
 	hdata.Salt = "this is my salt"
 
 	hid, _ := NewWithData(hdata)
@@ -84,7 +84,7 @@ func TestEncodeDecodeHex(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	const expected = "qmTqfesOIqHrsoCYf9UkFZixSKuBT4umuruXuMiDsVsbSrfV"
+	const expected = "bv89jEY45DslgBOeD2Qg"
 	if hash != expected {
 		t.Fatalf("got %q, expected %q", hash, expected)
 	}
