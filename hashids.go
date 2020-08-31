@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"unsafe"
 )
 
 const (
@@ -220,6 +221,11 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 	return string(result), nil
 }
 
+// ByteToString converts byte slice to string
+func ByteToString(b []byte) string {
+	return *(*string)(unsafe.Pointer(&b))
+}
+
 // EncodeHex hashes a hexadecimal string to a string containing at least MinLength characters taken from the Alphabet.
 // A hexadecimal string should not contain the 0x prefix.
 // Use DecodeHex using the same Alphabet and Salt to get back the hexadecimal string.
@@ -347,7 +353,7 @@ func (h *HashID) DecodeHex(hash string) (string, error) {
 		}
 		b[i] = hex[n-0x10]
 	}
-	return string(b), nil
+	return ByteToString(b), nil
 }
 
 func splitRunes(input, seps []rune) [][]rune {
