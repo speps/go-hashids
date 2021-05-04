@@ -1,6 +1,6 @@
 // Go implementation of http://www.hashids.org under MIT license
 // Generates hashes from an array of integers, eg. for YouTube like hashes
-// Setup: go get github.com/speps/go-hashids
+// Setup: go get github.com/speps/go-hashids/v2
 // Original implementations by Ivan Akimov at https://github.com/ivanakimov
 // Thanks to Rémy Oudompheng and Peter Hellberg for code review and fixes
 

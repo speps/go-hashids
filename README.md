@@ -9,18 +9,18 @@ under MIT License (same as the original implementations)
 Original implementations by [Ivan Akimov](https://github.com/ivanakimov)
 
 ### Setup
-<pre>go get github.com/speps/go-hashids</pre>
+<pre>go get github.com/speps/go-hashids/v2</pre>
 
 CLI tool :
 
-<pre>go get github.com/speps/go-hashids/cmd/hashid</pre>
+<pre>go get github.com/speps/go-hashids/v2/cmd/hashid</pre>
 
 ### Example
 ```go
 package main
 
 import "fmt"
-import "github.com/speps/go-hashids"
+import "github.com/speps/go-hashids/v2"
 
 func main() {
 	hd := hashids.NewData()
@@ -53,6 +53,10 @@ func main() {
 Let me know if I forgot anyone of course.
 
 ### Changelog
+
+2021/05/04
+
+* v2.0.1 - Added module support with /v2 suffix
 
 2017/05/09
 
