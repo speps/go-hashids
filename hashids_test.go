@@ -84,7 +84,7 @@ func TestEncodeDecodeHex(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	const expected = "qmTqfesOIqHrsoCYf9UkFZixSKuBT4umuruXuMiDsVsbSrfV"
+	const expected = "81OP0bv89jEY45DslgBOeD2Qg0kmb7"
 	if hash != expected {
 		t.Fatalf("got %q, expected %q", hash, expected)
 	}

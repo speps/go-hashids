@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -226,26 +228,15 @@ func (h *HashID) EncodeInt64(numbers []int64) (string, error) {
 //
 // Each hex nibble is encoded as an integer in range [16, 31].
 func (h *HashID) EncodeHex(hex string) (string, error) {
-	nums := make([]int, len(hex))
+	reg := regexp.MustCompile(`[\w\W]{1,12}`)
+	numbers := reg.FindAllString(hex, -1)
 
-	for i := 0; i < len(hex); i++ {
-		b := hex[i]
-		switch {
-		case (b >= '0') && (b <= '9'):
-			b -= '0'
-		case (b >= 'a') && (b <= 'f'):
-			b -= 'a' - 'A'
-			fallthrough
-		case (b >= 'A') && (b <= 'F'):
-			b -= ('A' - 0xA)
-		default:
-			return "", errors.New("invalid hex digit")
-		}
-		// Each int is in range [16, 31]
-		nums[i] = 0x10 + int(b)
+	nums := make([]int64, len(numbers))
+	for i, number := range numbers {
+		num, _ := strconv.ParseInt("1"+number, 16, 0)
+		nums[i] = num
 	}
-
-	return h.Encode(nums)
+	return h.EncodeInt64(nums)
 }
 
 // DEPRECATED: Use DecodeWithError instead
@@ -339,13 +330,9 @@ func (h *HashID) DecodeHex(hash string) (string, error) {
 		return "", err
 	}
 
-	const hex = "0123456789abcdef"
-	b := make([]byte, len(numbers))
-	for i, n := range numbers {
-		if n < 0x10 || n > 0x1f {
-			return "", errors.New("invalid number")
-		}
-		b[i] = hex[n-0x10]
+	var b string
+	for _, n := range numbers {
+		b += strconv.FormatInt(n, 16)[1:]
 	}
 	return string(b), nil
 }
