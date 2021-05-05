@@ -34,6 +34,27 @@ func main() {
 }
 ```
 
+If you wish to set your own Alhabets in the HashId rather than using the default ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"), you can use this example. You can replace the hd.Alphabet string with the alphabets that you might want to see in your hash id. Please note: Minimum Alphabet length should be 16 with unique characters.
+```go
+package main
+
+import "fmt"
+import "github.com/speps/go-hashids"
+
+func main() {
+	hd := hashids.NewData()
+	hd.Salt = "this is my salt"
+	hd.MinLength = 30
+	hd.Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+	h, _ := hashids.NewWithData(hd)
+	e, _ := h.Encode([]int{45, 434, 1313, 99})
+	fmt.Println(e)
+	d, _ := h.DecodeWithError(e)
+	fmt.Println(d)
+}
+```
+
+
 ### Thanks to all the contributors
 
 * [Harm Aarts](https://github.com/haarts)
