@@ -260,9 +260,9 @@ func (h *HashID) Decode(hash string) []int {
 	return result
 }
 
-// Decode unhashes the string passed to an array of int.
+// DecodeWithError unhashes the string passed to an array of int.
 // It is symmetric with Encode if the Alphabet and Salt are the same ones which were used to hash.
-// MinLength has no effect on Decode.
+// Does a sanity check with Encode so settings need to be the same!
 func (h *HashID) DecodeWithError(hash string) ([]int, error) {
 	result64, err := h.DecodeInt64WithError(hash)
 	if err != nil {
@@ -287,9 +287,9 @@ func (h *HashID) DecodeInt64(hash string) []int64 {
 	return result
 }
 
-// DecodeInt64 unhashes the string passed to an array of int64.
+// DecodeInt64WithError unhashes the string passed to an array of int64.
 // It is symmetric with EncodeInt64 if the Alphabet and Salt are the same ones which were used to hash.
-// MinLength has no effect on DecodeInt64.
+// Does a sanity check with Encode so settings need to be the same!
 func (h *HashID) DecodeInt64WithError(hash string) ([]int64, error) {
 	hashes := splitRunes([]rune(hash), h.guards)
 	hashIndex := 0
@@ -331,7 +331,7 @@ func (h *HashID) DecodeInt64WithError(hash string) ([]int64, error) {
 
 // DecodeHex unhashes the string passed to a hexadecimal string.
 // It is symmetric with EncodeHex if the Alphabet and Salt are the same ones which were used to hash.
-//
+// Does a sanity check with Encode so settings need to be the same!
 // Each hex nibble is decoded from an integer in range [16, 31].
 func (h *HashID) DecodeHex(hash string) (string, error) {
 	numbers, err := h.DecodeInt64WithError(hash)
